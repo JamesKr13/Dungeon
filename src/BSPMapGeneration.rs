@@ -54,7 +54,6 @@ impl TunnelingAlgorithm {
         let mut rooms = Vec::new();
         let mut rng = rand::thread_rng();
         for _range in 0..MAX_ROOMS {
-            print!("{}", _range);
             let mut w: i32 = rng.gen_range(ROOM_MIN_SIZE..=ROOM_MAX_SIZE);
             let mut h: i32 = rng.gen_range(ROOM_MIN_SIZE..=ROOM_MAX_SIZE);
             while w <= 2 {

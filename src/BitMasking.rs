@@ -13,6 +13,7 @@ pub struct BitMaskMap {
 impl Default for BitMaskMap {
     fn default() -> Self {
         let mut map = BSPTree::default();
+        println!("BitMask Default", );
         map.generate_level();
         Self {
             exit: (0,0),
