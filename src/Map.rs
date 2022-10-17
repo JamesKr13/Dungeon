@@ -5,12 +5,30 @@ pub const CELL_SIZE: f32 = 16.;
 extern crate rand;
 use rand::Rng;
 use macroquad::prelude::*;
+use super::Control::*;
+use std::fmt;
 
 const NUMBER_OF_DECORATIONS: i16 = 7;
 const FLOORCOOR: [(i16,i16);12] = [(6,0),(7,0),(8,0),(9,0),(6,1),(7,1),(8,1),(9,1),(6,2),(7,2),(8,2),(9,2)];
 #[derive(Clone,Copy,Debug)]
 pub enum AdvanceTileTypes {
     GenericFloor, Void, BLCorner, BRCorner, TLCorner, TRCorner, LEdge, REdge, TEdge, BEdge, OTLCorner,OTRCorner,OBLCorner,OBRCorner,Skull, Chest, Bones, CandleStick, SmallCHest, Rock, SmallRock
+}
+impl fmt::Display for AdvanceTileTypes {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            AdvanceTileTypes::GenericFloor => write!(f, "Floor"),
+            AdvanceTileTypes::Void => write!(f, "Nothing"),
+            AdvanceTileTypes::Skull => write!(f, "Skull"),
+            AdvanceTileTypes::Chest => write!(f, "Chest"),
+            AdvanceTileTypes::Bones => write!(f,"Bones"),
+            AdvanceTileTypes::SmallCHest => write!(f,"Small Chest"),
+            AdvanceTileTypes::CandleStick => write!(f,"Candle"),
+            AdvanceTileTypes::Rock => write!(f,"Rock"),
+            AdvanceTileTypes::SmallRock => write!(f,"Small Rock"),
+            _ => write!(f,"Wall"),
+        }
+    }
 }
 #[derive(Clone,Debug)]
 pub struct MapLayout {
@@ -37,7 +55,7 @@ impl MapLayout {
             for column in 0..WORLD_SIZE.0 {
                 match &self.tile_placement[row][column] {
                     AdvanceTileTypes::GenericFloor => draw_floor(row,column,texture), 
-                    AdvanceTileTypes::Void => self.draw_void(), 
+                    AdvanceTileTypes::Void => (), 
                     AdvanceTileTypes::BLCorner => draw_tile(row,column, texture, (0,4)),
                     AdvanceTileTypes::BRCorner => draw_tile(row,column, texture, (5,4)),
                     AdvanceTileTypes::TLCorner => draw_tile(row,column, texture, (0,0)),
@@ -62,16 +80,6 @@ impl MapLayout {
             }
         }
         let mut d: Vec<i16> = Vec::new();
-        // for each in &self.x {
-            
-        //     // for i in &d {
-        //     //     if i == &(each[0].1+each[0].0*2+each[1].1*4 + each[1].0*8) {
-        //     //         print!("{:#?}", each);
-        //     //     }
-        //     // }
-        //     // d.push(each[0].1+each[0].0*2+each[1].1*4 + each[1].0*8);
-        //     draw_line(each[0].0 as f32 * CELL_SIZE,each[0].1 as f32 * CELL_SIZE,each[1].0 as f32 * CELL_SIZE,each[1].1 as f32 * CELL_SIZE, 10.,RED);
-        // }
         self.draw_exit(texture);
     }
     fn draw_floor(&mut self, row: usize,column: usize, texture: Texture2D) {
@@ -93,6 +101,7 @@ impl MapLayout {
             ..Default::default()
         });
     }
+        
     pub fn tile_decorate(&mut self) {
         for row in 0..WORLD_SIZE.1 {
             for column in 0..WORLD_SIZE.0 {
@@ -119,16 +128,34 @@ impl MapLayout {
         }
 
     }
-pub fn check_future_move(&mut self, pos: (usize,usize)) -> bool{
-    match self.tile_placement[pos.1][pos.0] {
-        AdvanceTileTypes::GenericFloor => true,
-        AdvanceTileTypes::SmallCHest => true,
-        AdvanceTileTypes::Bones => true,
-        AdvanceTileTypes::Skull => true,
-        AdvanceTileTypes::CandleStick => true,
-        AdvanceTileTypes::Chest => true,
-        _ => false
+    pub fn get_path(&self, start_node: (usize,usize), end_node: (usize,usize)) -> Vec<(usize,usize)> {
+    // Open source code, written by Benjy under the MIT license.
+    let mut parents: Vec<Option<(usize,usize)>> = vec![None; self.nodes.len()];
+    let mut nodes_to_visit: VecDeque<((usize,usize), (usize,usize))> = VecDeque::new();
+    nodes_to_visit.push_back((start_node, start_node));
+    let mut visited_nodes: Vec<bool> = vec![false; self.nodes.len()];
+    while let Some((parent, node)) = nodes_to_visit.pop_front() {
+        visited_nodes[node] = true;
+        parents[node] = Some(parent);
+        if node == end_node {
+            break;
+        }
+        for neighbor in vec![(node.0,node.1+1),(node.0,node.1-1),(node.0+1,node.1),(node.0-1,node.1)] {
+            if !visited_nodes[*neighbor] {
+                nodes_to_visit.push_back((node, *neighbor));
+            }
+        }
     }
+    let mut path: Vec<(usize,usize)> = Vec::new();
+    let mut current_node = end_node;
+    loop {
+        path.push(current_node);
+        if current_node == start_node {
+            break;
+        }
+        current_node = parents[current_node].unwrap();
+    }
+    path
 }
 }
 pub fn draw_tile(row: usize, column: usize, texture: Texture2D, pos: (i16,i16)) {

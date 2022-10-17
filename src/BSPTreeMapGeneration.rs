@@ -2,7 +2,7 @@ extern crate rand;
 use rand::Rng;
 use std::collections::HashMap;
 
-pub const WORLD_SIZE: (usize,usize) = (30,30);
+pub const WORLD_SIZE: (usize,usize) = (50,50);
 pub const CELL_SIZE: f32 = 16.;
 const MAX_LEAF_SIZE: i16 = 20;
 const MIN_LEAF_SIZE: i16 = 5;
@@ -33,20 +33,20 @@ pub struct Leaf {
     height: i16,
     room: Rectangle,
 }
-pub fn new_leaf(X: i16, Y:i16, width: i16, height: i16) -> Leaf {
+pub fn new_leaf(x: i16, y:i16, width: i16, height: i16) -> Leaf {
     Leaf {
-        x: X,
-        y: Y,
+        x: x,
+        y: y,
         width: width,
         height: height,
         ..Default::default()
     }
 }
 impl Leaf {
-    pub fn inital(&mut self,X: i16, Y:i16, width: i16, height: i16) -> Self {
+    pub fn inital(&mut self,x: i16, y:i16, width: i16, height: i16) -> Self {
         Self {
-            x: X,
-            y: Y,
+            x: x,
+            y: y,
             width: width,
             height: height,
             ..Default::default()
@@ -67,12 +67,10 @@ impl Leaf {
                 true => self.height - MIN_LEAF_SIZE,
                 false => self.width - MIN_LEAF_SIZE
             };
-            print!("this max {}", max);
             if max <= MAX_LEAF_SIZE {
                 return None;
             }
             let split: i16 = rng.gen_range(MIN_LEAF_SIZE..max);
-            print!("Splitting");
             return match horizon_split {
                true => Some((self.inital(self.x,self.y,self.width,split),self.inital(self.x, self.y + split,self.width, self.height - split))),
                false => Some((self.inital(self.x,self.y,split,self.height), self.inital(self.x + split, self.y,self.width -split, self.height)))
@@ -101,6 +99,7 @@ pub struct BSPTree {
 }
 impl Default for BSPTree {
     fn default() -> Self {
+        println!("BSPTree Default", );
         Self {
             leafs: Vec::new(), root: new_leaf(0,0,WORLD_SIZE.0 as i16,WORLD_SIZE.1 as i16), level: vec![vec![TileType::Wall; WORLD_SIZE.0]; WORLD_SIZE.1], x: Vec::new()
         }
@@ -108,6 +107,7 @@ impl Default for BSPTree {
 }
 impl BSPTree {
     pub fn generate_level(&mut self) {
+        println!("Level Generated", );
         self.root = Leaf {
             x: 0,
             y: 0,
@@ -122,7 +122,7 @@ impl BSPTree {
             for index in 0..self.leafs.len() {
                 let mut l = self.leafs[index].clone();
                 if l.width > MIN_LEAF_SIZE || l.height > MIN_LEAF_SIZE {
-                    let mut x = l.split();
+                    let x = l.split();
                     if !x.is_none() {
                         let mut children = x.unwrap();
                         children.0.create_rooms();
@@ -149,7 +149,6 @@ impl BSPTree {
         }
     }
     fn create_hallway(&mut self) {
-        println!("{}",self.leafs.len());
         let mut linked_rooms: HashMap<(i16,i16),(i16,i16)> = HashMap::new();
         for room_index in 0..self.leafs.len() {
             let main_room = ((self.leafs[room_index].x*2+self.leafs[room_index].width)/2,(self.leafs[room_index].y*2+self.leafs[room_index].height)/2);
@@ -158,7 +157,7 @@ impl BSPTree {
             for other_room_index in 0..self.leafs.len() {
                 if other_room_index != room_index {
                 let compare_room = ((self.leafs[other_room_index].x*2+self.leafs[other_room_index].width)/2,(self.leafs[other_room_index].y*2+self.leafs[other_room_index].height)/2);
-                let distance = pythogoras((main_room.0-compare_room.0),(main_room.1-compare_room.1));
+                let distance = pythogoras(main_room.0-compare_room.0,main_room.1-compare_room.1);
                 if distance <= closes_distance && main_room !=match linked_rooms.get(&compare_room) {
                         Some(_) => linked_rooms[&compare_room],
                         None => (0,0),
@@ -169,19 +168,14 @@ impl BSPTree {
             }
         }
         linked_rooms.insert(main_room,closes_room);
-        println!("main room {},{} is linked to {},{}", main_room.0, main_room.1,closes_room.0,closes_room.1);
         self.x.push([main_room,closes_room]);
-        // self.create_passage(main_room,closes_room);
         }  
-        println!("{}",self.x.len()); 
         for i in 0..self.x.len() {
             self.create_passage(self.x[i][0],self.x[i][1]);
         }
     }
     fn create_passage(&mut self, point: (i16,i16), second_point: (i16,i16)) {
-        print!("main room {},{} is linked to {},{}", point.0, point.1,second_point.0,second_point.1);
         let mut destination_point = *vec!(point.1,second_point.1).iter().max().unwrap();
-        print!("y {} ", destination_point);
         for x_distance in *vec!(point.0,second_point.0).iter().min().unwrap()..=*vec!(point.0,second_point.0).iter().max().unwrap()+2 {
             self.level[destination_point as usize][x_distance as usize] = TileType::Floor;
             self.level[(destination_point+1) as usize][x_distance as usize] = TileType::Floor;
@@ -192,7 +186,6 @@ impl BSPTree {
             }
         }
         destination_point = *vec!(point.0,second_point.0).iter().max().unwrap();
-        print!("x {} \n", destination_point);
         for y_distance in *vec!(point.1,second_point.1).iter().min().unwrap()..=*vec!(point.1,second_point.1).iter().max().unwrap()+2 {
             self.level[y_distance as usize][destination_point as usize] = TileType::Floor;
             if destination_point != 0 {
