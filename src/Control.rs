@@ -23,7 +23,6 @@ pub struct Movement {
 
 impl Movement {
     pub fn vector_movement(&mut self) -> (i16,i16) {
-        // println!("{} {} {} {}", self.up, self.down, self.left, self.right);
         return (match (self.up,self.down) {
             (false,true) => -1,
             (true,false) => 1,
