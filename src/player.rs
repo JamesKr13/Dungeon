@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+// use std::collections::HashMap;
 use super::Interaction::Item;
 extern crate rand;
 use rand::Rng;
@@ -29,13 +29,13 @@ pub struct Health {
     points: i8
 }
 pub struct Inventory {
-    storage: [Item; 25],
+    pub storage: Vec<Item>,
     skin: Style
 }
 impl Default for Inventory {
     fn default() -> Self {
         Self {
-            storage: [Item::Empty;25],
+            storage: Vec::new(),
             skin: root_ui()
             .style_builder()
             .background_margin(RectOffset::new(37.0, 37.0, 5.0, 5.0))
@@ -160,19 +160,20 @@ impl PlayerCharacter {
     }
 }
 
-enum EntityType {
+pub enum EntityType {
     Vampire
 }
 enum EntityStatus {
     Passive,Violent, Neutral
 }
-struct Entity {
+pub struct Entity {
     health: Health,
     damage: Damage,
-    cor: Coordinates<i8>,
+    cor: Coordinates<i16>,
     entity_type: EntityType,
     entity_status: EntityStatus,
-    movement_points: i8
+    movement_points: i8,
+    frame: i8,
 
 }
 enum AIOptions {
@@ -189,8 +190,8 @@ impl PartialEq for AIOption {
 }
 impl Eq for AIOption {}
 impl Entity {
-    fn intialise(base_health: i8, base_cc:i8, base_range:i8, base_accuracy:f32,spawn:Coordinates<i8>, e_type: EntityType,base_movement_points: i8) -> Self {
-        let e_status = match e_type {
+    pub fn intialise(base_health: i8, base_cc:i8, base_range:i8, base_accuracy:f32,spawn:Coordinates<i16>, e_type: EntityType,base_movement_points: i8) -> Self {
+        let e_status = match &e_type {
             EntityType::Vampire => EntityStatus::Violent,
         };
         Self {
@@ -199,10 +200,11 @@ impl Entity {
             cor: spawn,
             entity_type: e_type,
             entity_status: e_status,
-            movement_points: base_movement_points
+            movement_points: base_movement_points,
+            frame: 0,
         }
     }
-    fn attack(&self, target_pos: Coordinates<i8>) -> Option<i8> {
+    fn attack(&self, target_pos: Coordinates<i16>) -> Option<i8> {
         if !matches!(self.entity_status,EntityStatus::Passive) {
             return Some(match (((self.cor.x-target_pos.x).pow(2)+(self.cor.y-target_pos.y).pow(2)) as f32).sqrt() >= (2.0 as f32).sqrt() {
                 true => self.damage.cc_damage,
@@ -211,8 +213,32 @@ impl Entity {
         }
         return None
     }
+    fn update_Entity_frame(&mut self) -> i8 {
+        let frame = match self.frame {
+         0 => 1,
+         1 => 2,
+         2 => 3,
+         3 => 0,
+         _ => 0,
+         
+        };
+        self.frame = frame;
+        return frame
+    }
+    fn update_entity(self) {
+        
+    }
+    pub fn draw_entity(&self) {
+        // draw_texture_ex(*texture,self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, WHITE, DrawTextureParams {
+        //     source: Some(Rect {
+        //        x: 0.,y: 0.,w: CELL_SIZE ,h:CELL_SIZE
+        //     }),
+        //     ..Default::default()
+        draw_rectangle(self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, CELL_SIZE, CELL_SIZE, RED)
+        // });
 }
 
+}
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Pos(pub i32, pub i32);
 

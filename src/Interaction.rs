@@ -2,9 +2,11 @@ use macroquad::ui::{hash, root_ui, widgets, Skin,Style};
 use macroquad::prelude::*;
 use super::Control::*;
 use std::collections::HashMap;
-use super::Map::{AdvanceTileTypes, CELL_SIZE};
+use regex::Regex;
 use std::fmt;
-use super::Player::Coordinates;
+use super::player::{Coordinates,PlayerCharacter};
+extern crate rand;
+use ::rand::Rng;
 
 
 
@@ -44,6 +46,42 @@ impl fmt::Display for Item {
         }
     }
 }
+struct CFG {
+    prod: HashMap<String,Vec<String>>,
+    proccess_input: Regex,
+    final_process_input: Regex,
+}
+// impl CFG {
+//     fn init() -> Self {
+//         Self {
+//             prod: HashMap::new(),
+//             proccess_input: Regex::new(r"(:)").unwrap(),
+//             final_process_input: Regex::new(r"()")
+//         }
+//     }
+//     fn add_prod(&mut self, lhs: String, rhs: String){
+//         let prods: Vec<String> = self.proccess_input.find_iter(&(&rhs)[..]).filter_map(|words| words.as_str().parse().ok()).collect();
+//         for prod in prods {
+//             if self.prod.contains_key(&lhs){
+//             self.prod.get_mut(&prod).expect("Shouldd not be empty").push(prod.chars().collect());
+//             }
+//         }
+//     }
+//     fn gen_random(&self,symbol) {
+//         let mut rng = rand::thread_rng();
+//         let rand_index: usize = rng.gen_range(0..self.prod.get(&symbol).expect("Invalid type").len());
+//         let rand_prod = self.prod.get(&symbol).expect("Invalid type")[rand_index];
+//         let sentence = String::new();
+//         for sym in rand_prod.chars() {
+//             if self.prod.contains_key(&sym.to_string()) {
+//                 sentence.push_str(self.gen_random(sym))
+//             }
+//             else {
+//                 sentence.push_str();
+//             }
+//         }
+//     }
+// }
 #[derive(Default,Clone)]
 struct InventorySkins {
     skins: HashMap<String,Style>
@@ -81,16 +119,16 @@ impl ClickActions {
         // println!("still fine", );
         
         root_ui().window(hash!("Menu"), vec2(mouse_position().0,mouse_position().1), vec2(65., 40.), |ui| {
-            if (widgets::Button::new("Move Here")
+            if widgets::Button::new("Move Here")
             .position(vec2(0.,0.))
-            .ui(ui)) {
+            .ui(ui) {
                 self.run_state = false;
                 println!("Pushed |.................................................................................................................|", );
                 // self.click_action.run_state = true;
             }
-            if (widgets::Button::new("Take Item")
+            if widgets::Button::new("Take Item")
             .position(vec2(0.,20.))
-            .ui(ui)) {
+            .ui(ui) {
                 self.run_state = false;
                 println!("Pushed |.................................................................................................................|", );
                 // self.click_action.run_state = true;
@@ -108,44 +146,59 @@ pub struct Storage {
     pub key: KeyCode,
     pub alt_state: States,
     inventory_skins: InventorySkins,
-    pub click_action: ClickActions,
+    pub used: bool,
 }
 impl Default for Storage {
     fn default() -> Self {
         let mut ivsk = InventorySkins::default();
-        let all_items = vec!(Item::Bow,Item::Sword);
+        let all_items = vec!(Item::Bow,Item::Sword,Item::Sword);
         ivsk.create_inventory_skins(&all_items);
         Self {
             items: all_items,
             key: KeyCode::E,
             alt_state: States::Storage,
             inventory_skins: ivsk,
-            click_action: ClickActions::default()
+            used: false,
         }
     }
 }
 impl Storage {
-    pub fn display(&mut self) {
-        let mut rm_item = 0;
-        for each_item_index in 0..self.items.len() {
-            let button_skin = {let button_style = (self.inventory_skins.skins.get(&self.items[each_item_index].to_string()).unwrap()).clone();
-            Skin {
-                button_style,
-                ..root_ui().default_skin()
-            }};
-            root_ui().push_skin(&button_skin);
-            root_ui().window(hash!(),vec2(screen_width()-screen_height()/8.,screen_height()/8.),vec2(screen_width()/3., 3.*screen_height()/4.), |ui| {
-                    if (widgets::Button::new(self.items[each_item_index].to_string())
-                    .position(vec2(0.,0.+each_item_index as f32 * 25.))
-                    .ui(ui)) {
-                        println!("Pushed |.................................................................................................................|", );
-                        self.click_action.run_state = true;
+    pub fn display(&mut self) -> Option<Item>{
+            // // let button_skin = {let button_style = (self.inventory_skins.skins.get(&self.items[each_item_index].to_string()).unwrap()).clone();
+            // Skin {
+            //     button_style,
+            //     ..root_ui().default_skin()
+            // }};
+            // root_ui().push_skin(&button_skin);
+            let mut item_removed = 0;
+            let mut item:Option<Item> = None;
+            let window_size = vec2(150., 3.*screen_height()/4.);
+            root_ui().window(hash!("Chest"),vec2(screen_width()-150.,screen_height()/8.),window_size, |ui| {
+                if widgets::Button::new(self.items[0].to_string())
+                    .position(vec2(0.,0.))
+                    .ui(ui){
+                        item = Some(self.items[0]);
+                        self.used = true;
                     }
+                    ui.separator();
+                if widgets::Button::new(self.items[1].to_string())
+                    .position(vec2(0.,25.))
+                    .ui(ui){
+                        item = Some(self.items[1]);
+                        self.used = true;
+                    }
+                    ui.separator();
+                if widgets::Button::new(self.items[2].to_string())
+                    .position(vec2(0.,50.))
+                    .ui(ui) {
+                        item = Some(self.items[2]);
+                        self.used = true;
+                    }
+                    ui.separator();
             });
-        }
-            
+            item
+        } 
     }
-}
 
 pub struct Inventory {
     content: [Item; INVENTORY_SPACE],

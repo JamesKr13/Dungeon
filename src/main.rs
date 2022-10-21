@@ -5,28 +5,31 @@ pub const CELL_SIZE: f32 = 16.;
 pub mod Map;
 use crate ::Map::*;
 pub mod BitMasking;
-use crate ::BitMasking::*;
 pub mod Control;
 use crate ::Control::*;
 use macroquad::prelude::*;
 pub mod Decorate;
-use crate ::Decorate::*;
 pub mod BSPTreeMapGeneration;
 use crate ::BSPTreeMapGeneration::*;
-use macroquad::color::*;
 use std::collections::HashMap;
 pub mod Interaction;
 use crate ::Interaction::*;
-pub mod Player;
-use crate ::Player::*;
+pub mod player;
+use crate ::player::*;
 extern crate rand;
 use ::rand::Rng;
-use std::thread;
-use std::time::{SystemTime,Duration};
-use pathfinding::prelude::dijkstra;
+pub mod QuestionGen;
+use crate ::QuestionGen::*;
+// use std::thread;
+use std::time::SystemTime;
+// use pathfinding::prelude::dijkstra;
 
 const PATH_FINDING_RANGE: f32 = 15.0;
-
+fn draw_mobs(mobs: &Vec<Entity>) {
+    for mob in mobs{
+        mob.draw_entity();
+    }
+}
 fn set_spawn(map: &Vec<Vec<AdvanceTileTypes>>) -> (i16,i16) {
     let mut rng = rand::thread_rng();
     let mut x: usize = rng.gen_range(0..WORLD_SIZE.0);
@@ -39,12 +42,22 @@ fn set_spawn(map: &Vec<Vec<AdvanceTileTypes>>) -> (i16,i16) {
     }
     return (x as i16,y as i16)
 }
+    
+pub fn create_mobs(number: i8,map: &Vec<Vec<AdvanceTileTypes>>) -> Vec<Entity>{
+    let mut all_entity = Vec::new();
+    for i in 0..number {
+        let mut rng = rand::thread_rng();
+        let spawn = set_spawn(map);
+        all_entity.push(Entity::intialise(100, 100, 100, 100., Coordinates {x:spawn.0,y:spawn.1} , EntityType::Vampire, 3))
+    } 
+    return all_entity
+}    
 #[macroquad::main("differ-geon-11")]
 async fn main() {
-    let mut target = (0.,0.);
-    let mut zoom = 0.005;
-    let mut rotation = 0.0;
-    let mut smooth_rotation: f32 = 180.;
+    let target = (0.,0.);
+    let zoom = 0.005;
+    let rotation = 0.0;
+    let smooth_rotation: f32 = 180.;
     let texture: Texture2D = Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/sheet.png"), Some(ImageFormat::Png)));
     texture.set_filter(FilterMode::Nearest);
     let mut map2 = MapLayout::default();
@@ -55,31 +68,32 @@ async fn main() {
     let screen_world = (WORLD_SIZE.0 as f32*CELL_SIZE*zoom/2.,WORLD_SIZE.1 as f32 *CELL_SIZE*zoom);
     let mut current_state = States::Play;
     let mut sub_states = [States::Play; 3];
-    let mut record =false;
     let mut all_storage: HashMap<(i16,i16),Storage> = HashMap::new();
-    let mut action_key: Option<KeyCode>= None;
-    let mut alt_state: States =  States::Empty;
-    let mut draw_info = false;
+    let action_key: Option<KeyCode>= None;
+    let alt_state: States =  States::Empty;
+    let draw_info = false;
     let mut x = 0;
-    let  mut y = 0;
+    let mut y = 0;
     let mut selected = (0,0);
     let mut player = PlayerCharacter::intialise(100,100,100,30.,Coordinates {
         x:current_player.0,
         y:current_player.1
     });
+    let mut black_list: Vec<(i16,i16)> = Vec::new();
     let mut path_leads_to: Coordinates<i16> = Coordinates {x:50,y:50};
-    let mut found_path: Option<(Vec<(i32, i32)>, u32)> = None;
+    let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
+    let mobs = create_mobs(1,&map2.tile_placement);
     // assert_eq!(result.expect("no path found").1, 4);
     println!("{},{}", current_player.0,current_player.1);
     let player_texture_paths = character(&player.character);
-    let mut player_texutres: [Texture2D;4] = [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_1.png"), Some(ImageFormat::Png))),
+    let player_texutres: [Texture2D;4] = [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_1.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_2.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_3.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_4.png"), Some(ImageFormat::Png)))];
     for each in player_texutres {
         each.set_filter(FilterMode::Nearest);
     }
-    let mut selection_hand: [Texture2D;4] = [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_1.png"), Some(ImageFormat::Png))),
+    let selection_hand: [Texture2D;4] = [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_1.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_2.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_3.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_4.png"), Some(ImageFormat::Png)))];
@@ -87,6 +101,8 @@ async fn main() {
         each.set_filter(FilterMode::Nearest);
     }
     let mut period = SystemTime::now();
+    let mut question = Question::default();
+    question.create("eigen value");
     loop {
         let mut click = ClickActions {
             run_state: false,
@@ -128,6 +144,7 @@ async fn main() {
         
         if matches!(current_state,States::Play) {
             map2.draw_map(texture);
+            draw_mobs(&mobs);
             draw_rectangle_lines(abs(x) as f32 *CELL_SIZE,abs(y) as f32 * CELL_SIZE,CELL_SIZE,CELL_SIZE,3.,GOLD);
             if matches!(sub_states[0],States::Play) && matches!(sub_states[1],States::Play) {
                 let mut movement = Movement {
@@ -172,6 +189,8 @@ async fn main() {
             AdvanceTileTypes::Chest => 0,
             _ => 2
         };
+        question.user_answer = ask_question(&question,&question.user_answer).to_string();
+        // question.show = true;
         if store_check != 2 {
             if !all_storage.contains_key(&current_player){
                 let storage = Storage::default();
@@ -185,10 +204,18 @@ async fn main() {
                 }
             }
             if matches!(sub_states[0],States::Storage) {
-                all_storage[&current_player].clone().display();
+                if !black_list.iter().any(|&i| i==current_player) {
+                    println!("{}", &all_storage[&current_player].used);
+                let pull_item = all_storage[&current_player].clone().display();
+                if !pull_item.is_none(){
+                    player.storage.storage.push(pull_item.unwrap());
+                    black_list.push(current_player);
+                    sub_states[0] = States::Play;
+                }
+            }
             }
         }
-        if is_key_pressed(KeyCode::I) {
+        if is_key_pressed(KeyCode::I){
             sub_states[1] = match sub_states[1] {
                 States::Inventory => States::Play,
                 _ => States::Inventory,
@@ -200,7 +227,6 @@ async fn main() {
     } 
     y = (((((mouse_position_local()[1] + offset.1)*(screen_height()/screen_width()))/zoom) as i16 | 15)+1)/16 -1;
     x = -((((mouse_position_local()[0] - offset.0)/zoom) as i16 | 15)+1)/16 ;
-
     player.cor.x = current_player.0;
     player.cor.y = current_player.1;
     if is_mouse_button_down(MouseButton::Left) {

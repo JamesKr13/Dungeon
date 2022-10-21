@@ -1,7 +1,7 @@
 use macroquad::prelude::*;
 use super::Map::AdvanceTileTypes;
 pub const SPEED: f32 = 16.;
-use std::collections::HashMap;
+// use std::collections::HashMap;
 
 #[derive(Copy,Clone,Debug)]
 pub enum States {
@@ -23,6 +23,7 @@ pub struct Movement {
 
 impl Movement {
     pub fn vector_movement(&mut self) -> (i16,i16) {
+        // println!("{} {} {} {}", self.up, self.down, self.left, self.right);
         return (match (self.up,self.down) {
             (false,true) => -1,
             (true,false) => 1,
