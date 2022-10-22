@@ -1,5 +1,5 @@
-use super::BSPTreeMapGeneration::WORLD_SIZE;
-use super::Map::*;
+use super::BSP_tree_map_generation::WORLD_SIZE;
+use super::map::*;
 extern crate rand;
 use rand::Rng;
 use macroquad::prelude::*;
@@ -50,26 +50,26 @@ impl PlaceObjects {
             for column in 0..WORLD_SIZE.0 {
                 let object: Objects = self.object_map[row][column];
                 if matches!(object, Objects::Chest) {
-                    draw_tile(row,column, texture, (2,8))
+                    _draw_tile(row,column, texture, (2,8))
                     }
                 else if matches!(object, Objects::Skull){
-                    draw_tile(row,column, texture, (7,7))
+                    _draw_tile(row,column, texture, (7,7))
                     }
                 else if matches!(object, Objects::SmallCHest){
-                    draw_tile(row,column, texture, (1,8))
+                    _draw_tile(row,column, texture, (1,8))
                     }
 
                 else if matches!(object, Objects::CandleStick){
                     draw_rectangle((column as f32)* CELL_SIZE, (row as f32)*CELL_SIZE, CELL_SIZE,CELL_SIZE, ORANGE)
                     }
                 else if matches!(object, Objects::Bones){
-                    draw_tile(row,column, texture, (8,6))
+                    _draw_tile(row,column, texture, (8,6))
                     }
                 else if matches!(object, Objects::SmallRock){
-                    draw_tile(row,column, texture, (9,5))
+                    _draw_tile(row,column, texture, (9,5))
                     }
                 else if matches!(object, Objects::Rock){
-                    draw_tile(row,column, texture, (9,4))
+                    _draw_tile(row,column, texture, (9,4))
                     }
             }
         }

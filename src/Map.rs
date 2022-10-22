@@ -1,6 +1,6 @@
-use super::BitMasking::*;
+use super::bit_masking::*;
 // use super::BSPMapGeneration::*;
-use super::BSPTreeMapGeneration::{WORLD_SIZE,TileType};
+use super::BSP_tree_map_generation::{WORLD_SIZE,TileType};
 pub const CELL_SIZE: f32 = 16.;
 extern crate rand;
 use rand::Rng;
@@ -39,7 +39,7 @@ pub struct MapLayout {
     exit: (i32,i32),
     pub other_map: Vec<Vec<TileType>>,
     pub tile_placement: Vec<Vec<AdvanceTileTypes>>,
-    x: Vec<[(i16,i16);2]>
+    // x: Vec<[(i16,i16);2]>
 }
 
 impl Default for MapLayout {
@@ -50,7 +50,7 @@ impl Default for MapLayout {
             exit: map.exit,
             other_map: map.map,
             tile_placement: map.tile_map,
-            x: map.x
+            // x: map.x
         }
     }
 }
@@ -59,20 +59,20 @@ impl MapLayout {
         for row in 0..WORLD_SIZE.1 {
             for column in 0..WORLD_SIZE.0 {
                 match &self.tile_placement[row][column] {
-                    AdvanceTileTypes::GenericFloor => draw_floor(row,column,texture), 
+                    AdvanceTileTypes::GenericFloor => _draw_floor(row,column,texture), 
                     AdvanceTileTypes::Void => (), 
-                    AdvanceTileTypes::BLCorner => draw_tile(row,column, texture, (0,4)),
-                    AdvanceTileTypes::BRCorner => draw_tile(row,column, texture, (5,4)),
-                    AdvanceTileTypes::TLCorner => draw_tile(row,column, texture, (0,0)),
-                    AdvanceTileTypes::TRCorner => draw_tile(row,column, texture, (0,5)),
-                    AdvanceTileTypes::LEdge => draw_tile(row,column, texture, (0,0)),
-                    AdvanceTileTypes::REdge => draw_tile(row,column, texture, (5,0)),
-                    AdvanceTileTypes::TEdge => draw_tile(row,column, texture, (3,0)),
-                    AdvanceTileTypes::BEdge => draw_tile(row,column, texture, (3,4)),
-                    AdvanceTileTypes::OBRCorner=> draw_tile(row,column,texture, (0,6)),
-                    AdvanceTileTypes::OBLCorner => draw_tile(row,column,texture, (0,6)),
-                    AdvanceTileTypes::OTLCorner => draw_tile(row,column,texture, (5,5)),
-                    AdvanceTileTypes::OTRCorner => draw_tile(row,column,texture, (0,5)),
+                    AdvanceTileTypes::BLCorner => _draw_tile(row,column, texture, (0,4)),
+                    AdvanceTileTypes::BRCorner => _draw_tile(row,column, texture, (5,4)),
+                    AdvanceTileTypes::TLCorner => _draw_tile(row,column, texture, (0,0)),
+                    AdvanceTileTypes::TRCorner => _draw_tile(row,column, texture, (0,5)),
+                    AdvanceTileTypes::LEdge => _draw_tile(row,column, texture, (0,0)),
+                    AdvanceTileTypes::REdge => _draw_tile(row,column, texture, (5,0)),
+                    AdvanceTileTypes::TEdge => _draw_tile(row,column, texture, (3,0)),
+                    AdvanceTileTypes::BEdge => _draw_tile(row,column, texture, (3,4)),
+                    AdvanceTileTypes::OBRCorner=> _draw_tile(row,column,texture, (0,6)),
+                    AdvanceTileTypes::OBLCorner => _draw_tile(row,column,texture, (0,6)),
+                    AdvanceTileTypes::OTLCorner => _draw_tile(row,column,texture, (5,5)),
+                    AdvanceTileTypes::OTRCorner => _draw_tile(row,column,texture, (0,5)),
                     AdvanceTileTypes::Chest => draw_decor(row,column, texture, (2,8)),
                     AdvanceTileTypes::SmallCHest => draw_decor(row,column, texture, (1,8)),
                     AdvanceTileTypes::Bones => draw_decor(row,column, texture, (8,6)),
@@ -84,21 +84,17 @@ impl MapLayout {
                 };
             }
         }
-        let mut d: Vec<i16> = Vec::new();
         self.draw_exit(texture);
     }
-    fn draw_floor(&mut self, row: usize,column: usize, texture: Texture2D) {
+    fn _draw_floor(&mut self, row: usize,column: usize, texture: Texture2D) {
         let index = ((((row as i16 |(CELL_SIZE as i16 -1)) +1) as f32)/CELL_SIZE) as usize;
-        self.draw_tile(row,column,texture,FLOORCOOR[index]);
+        self._draw_tile(row,column,texture,FLOORCOOR[index]);
 
     }
     fn draw_exit(&mut self,texture: Texture2D) {
-        self.draw_tile((self.exit.1) as usize,(self.exit.0) as usize, texture,(9,3))
+        self._draw_tile((self.exit.1) as usize,(self.exit.0) as usize, texture,(9,3))
     }
-    fn draw_void(&mut self) {
-
-    }
-    fn draw_tile(&mut self,row: usize, column: usize, texture: Texture2D, pos: (i16,i16)) {
+    fn _draw_tile(&mut self,row: usize, column: usize, texture: Texture2D, pos: (i16,i16)) {
         draw_texture_ex(texture,column as f32 * CELL_SIZE,row as f32 *CELL_SIZE, WHITE, DrawTextureParams {
             source: Some(Rect {
                x: pos.0 as f32 *CELL_SIZE,y:pos.1 as f32 * CELL_SIZE, w:CELL_SIZE,h:CELL_SIZE
@@ -163,7 +159,7 @@ impl MapLayout {
     // path
 
 }
-pub fn draw_tile(row: usize, column: usize, texture: Texture2D, pos: (i16,i16)) {
+pub fn _draw_tile(row: usize, column: usize, texture: Texture2D, pos: (i16,i16)) {
     draw_texture_ex(texture,column as f32 * CELL_SIZE,row as f32 *CELL_SIZE, WHITE, DrawTextureParams {
         source: Some(Rect {
            x: pos.0 as f32 *CELL_SIZE,y:pos.1 as f32 * CELL_SIZE, w:CELL_SIZE,h:CELL_SIZE
@@ -172,7 +168,7 @@ pub fn draw_tile(row: usize, column: usize, texture: Texture2D, pos: (i16,i16)) 
     });
 }
 pub fn draw_decor(row: usize, column: usize, texture: Texture2D, pos: (i16,i16)) {
-    draw_floor(row,column,texture);
+    _draw_floor(row,column,texture);
     draw_texture_ex(texture,column as f32 * CELL_SIZE,row as f32 *CELL_SIZE, WHITE, DrawTextureParams {
         source: Some(Rect {
            x: pos.0 as f32 *CELL_SIZE,y:pos.1 as f32 * CELL_SIZE, w:CELL_SIZE,h:CELL_SIZE
@@ -180,8 +176,8 @@ pub fn draw_decor(row: usize, column: usize, texture: Texture2D, pos: (i16,i16))
         ..Default::default()
     });
 }
-fn draw_floor(row: usize,column: usize, texture: Texture2D) {
+fn _draw_floor(row: usize,column: usize, texture: Texture2D) {
     let index = ((((row as i16 |(CELL_SIZE as i16 -1)) +1) as f32)/CELL_SIZE) as usize;
-    draw_tile(row,column,texture,FLOORCOOR[index]);
+    _draw_tile(row,column,texture,FLOORCOOR[index]);
 
 }

@@ -1,15 +1,13 @@
 // use std::collections::HashMap;
-use super::Interaction::Item;
+use super::interaction::Item;
 extern crate rand;
 use rand::Rng;
 use macroquad::prelude::*;
-use super::Map::CELL_SIZE;
+use super::map::CELL_SIZE;
 use std::fmt;
 use pathfinding::prelude::astar;
-use super::Map::AdvanceTileTypes;
 use macroquad::ui::{hash, root_ui, widgets, Skin,Style};
 
-const INVENTORY_SPACE: i8 = 5;
 pub fn character(char_type:&Character) -> [String; 4]{
     match char_type {
          Character::Priest => ["priest1_v2_1".to_string(),"priest1_v2_2".to_string(),"priest1_v2_3".to_string(),"priest1_v2_4".to_string()],
@@ -51,11 +49,11 @@ impl Inventory {
                 ..root_ui().default_skin()
             }};
         root_ui().push_skin(&button_skin);
-            root_ui().window(hash!(),vec2(0.,screen_height()/15.),vec2(screen_width()/6., screen_height()*13.0/15.), |ui| {
+            root_ui().window(hash!(), vec2(0., screen_height() / 15.), vec2(screen_width() / 6., screen_height() * 13.0 / 15.), |ui| {
                 for each_item_index in 0..self.storage.len() {
-                    if (widgets::Button::new(&self.storage[each_item_index].to_string()[..])
+                    if widgets::Button::new(&self.storage[each_item_index].to_string()[..])
                     .position(vec2(0.,0.+each_item_index as f32 * 25.))
-                    .ui(ui)) {
+                    .ui(ui) {
                         println!("Pushed", );
                     }
                     ui.separator();
@@ -146,7 +144,6 @@ impl PlayerCharacter {
         });
     }
     pub fn update_player_frame(&mut self) -> i8 {
-        let char_paths = character(&self.character);
         let frame = match self.frame {
          0 => 1,
          1 => 2,
@@ -164,7 +161,9 @@ pub enum EntityType {
     Vampire
 }
 enum EntityStatus {
-    Passive,Violent, Neutral
+    Passive,
+    Violent,
+    Neutral
 }
 pub struct Entity {
     health: Health,
@@ -204,7 +203,7 @@ impl Entity {
             frame: 0,
         }
     }
-    fn attack(&self, target_pos: Coordinates<i16>) -> Option<i8> {
+    fn _attack(&self, target_pos: Coordinates<i16>) -> Option<i8> {
         if !matches!(self.entity_status,EntityStatus::Passive) {
             return Some(match (((self.cor.x-target_pos.x).pow(2)+(self.cor.y-target_pos.y).pow(2)) as f32).sqrt() >= (2.0 as f32).sqrt() {
                 true => self.damage.cc_damage,
@@ -213,7 +212,7 @@ impl Entity {
         }
         return None
     }
-    fn update_Entity_frame(&mut self) -> i8 {
+    fn _update_Entity_frame(&mut self) -> i8 {
         let frame = match self.frame {
          0 => 1,
          1 => 2,
@@ -225,8 +224,8 @@ impl Entity {
         self.frame = frame;
         return frame
     }
-    fn update_entity(self) {
-        
+    fn _update_entity(self) {
+        todo!()
     }
     pub fn draw_entity(&self) {
         // draw_texture_ex(*texture,self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, WHITE, DrawTextureParams {
@@ -252,27 +251,6 @@ impl Pos {
     let next_tiles: Vec<(Pos, u32)> = vec![Pos(x+1,y+1), Pos(x+1,y-1), Pos(x-1,y+1), Pos(x-1,y-1),
          Pos(x+1,y+1), Pos(x+1,y-1), Pos(x-1,y+1), Pos(x-1,y-1)]
          .into_iter().map(|p| (p, 1)).collect();
-//   let mut output_tiles: Vec<(Pos, u32)> = Vec::new();
-//   for tile in next_tiles {
-//     if match tile_placement[tile.0.1 as usize][tile.0.1 as usize] {
-//         AdvanceTileTypes::BLCorner => false,
-//         AdvanceTileTypes::BRCorner => false,
-//         AdvanceTileTypes::TLCorner => false,
-//         AdvanceTileTypes::TRCorner => false,
-//         AdvanceTileTypes::LEdge => false,
-//         AdvanceTileTypes::REdge => false,
-//         AdvanceTileTypes::TEdge => false,
-//         AdvanceTileTypes::BEdge => false,
-//         AdvanceTileTypes::OBRCorner=> false,
-//         AdvanceTileTypes::OBLCorner => false,
-//         AdvanceTileTypes::OTLCorner => false,
-//         AdvanceTileTypes::OTRCorner => false,
-//         AdvanceTileTypes::Rock => false,
-//         _ => true,
-//     }{
-//     output_tiles.push(tile);
-//     }
-//   }
   return next_tiles
 }
 }

@@ -2,26 +2,28 @@
 pub const CELL_SIZE: f32 = 16.;
 // pub mod BSPMapGeneration;
 // use crate ::BSPMapGeneration::*;
-pub mod Map;
-use crate ::Map::*;
-pub mod BitMasking;
-pub mod Control;
-use crate ::Control::*;
+pub mod map;
+use crate ::map::*;
+pub mod bit_masking;
+pub mod control;
+use crate ::control::*;
 use macroquad::prelude::*;
-pub mod Decorate;
-pub mod BSPTreeMapGeneration;
-use crate ::BSPTreeMapGeneration::*;
+pub mod decorate;
+pub mod BSP_tree_map_generation;
+use crate ::BSP_tree_map_generation::*;
 use std::collections::HashMap;
-pub mod Interaction;
-use crate ::Interaction::*;
+pub mod interaction;
+use crate ::interaction::*;
 pub mod player;
 use crate ::player::*;
 extern crate rand;
 use ::rand::Rng;
-pub mod QuestionGen;
-use crate ::QuestionGen::*;
+pub mod question_gen;
+use crate ::question_gen::*;
 // use std::thread;
 use std::time::SystemTime;
+pub mod traits;
+use crate ::traits::*;
 // use pathfinding::prelude::dijkstra;
 
 const PATH_FINDING_RANGE: f32 = 15.0;
@@ -30,6 +32,9 @@ fn draw_mobs(mobs: &Vec<Entity>) {
         mob.draw_entity();
     }
 }
+
+
+
 fn set_spawn(map: &Vec<Vec<AdvanceTileTypes>>) -> (i16,i16) {
     let mut rng = rand::thread_rng();
     let mut x: usize = rng.gen_range(0..WORLD_SIZE.0);
@@ -45,8 +50,7 @@ fn set_spawn(map: &Vec<Vec<AdvanceTileTypes>>) -> (i16,i16) {
     
 pub fn create_mobs(number: i8,map: &Vec<Vec<AdvanceTileTypes>>) -> Vec<Entity>{
     let mut all_entity = Vec::new();
-    for i in 0..number {
-        let mut rng = rand::thread_rng();
+    for _ in 0..number {
         let spawn = set_spawn(map);
         all_entity.push(Entity::intialise(100, 100, 100, 100., Coordinates {x:spawn.0,y:spawn.1} , EntityType::Vampire, 3))
     } 
@@ -56,7 +60,6 @@ pub fn create_mobs(number: i8,map: &Vec<Vec<AdvanceTileTypes>>) -> Vec<Entity>{
 async fn main() {
     let target = (0.,0.);
     let zoom = 0.005;
-    let rotation = 0.0;
     let smooth_rotation: f32 = 180.;
     let texture: Texture2D = Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/sheet.png"), Some(ImageFormat::Png)));
     texture.set_filter(FilterMode::Nearest);
@@ -64,14 +67,9 @@ async fn main() {
     let mut current_player = set_spawn(&map2.tile_placement);
     let mut offset = (current_player.0 as f32 *zoom, current_player.1 as f32*zoom);
     map2.tile_decorate();
-    let background_color = Color::new(36.,18.,26.,1.);
-    let screen_world = (WORLD_SIZE.0 as f32*CELL_SIZE*zoom/2.,WORLD_SIZE.1 as f32 *CELL_SIZE*zoom);
     let mut current_state = States::Play;
     let mut sub_states = [States::Play; 3];
     let mut all_storage: HashMap<(i16,i16),Storage> = HashMap::new();
-    let action_key: Option<KeyCode>= None;
-    let alt_state: States =  States::Empty;
-    let draw_info = false;
     let mut x = 0;
     let mut y = 0;
     let mut selected = (0,0);
@@ -80,11 +78,8 @@ async fn main() {
         y:current_player.1
     });
     let mut black_list: Vec<(i16,i16)> = Vec::new();
-    let mut path_leads_to: Coordinates<i16> = Coordinates {x:50,y:50};
     let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
     let mobs = create_mobs(1,&map2.tile_placement);
-    // assert_eq!(result.expect("no path found").1, 4);
-    println!("{},{}", current_player.0,current_player.1);
     let player_texture_paths = character(&player.character);
     let player_texutres: [Texture2D;4] = [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_1.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_2.png"), Some(ImageFormat::Png))),
@@ -103,6 +98,8 @@ async fn main() {
     let mut period = SystemTime::now();
     let mut question = Question::default();
     question.create("eigen value");
+    let mut countdown = CountDown::new_countdown(100);
+    let cfg = CFG::default();
     loop {
         let mut click = ClickActions {
             run_state: false,
@@ -115,14 +112,19 @@ async fn main() {
         }
         
         
-
+        if !countdown.check() {
+            println!("You are dead", );
+        }
+        if is_key_pressed(KeyCode::P) {
+            println!("{}",cfg.create_sentence("S".to_string()));
+        }
         if !matches!(current_state,States::Menu) {
             set_camera(&Camera2D {
                 target: vec2(target.0, target.1),
                 rotation: smooth_rotation,
                 zoom: vec2(zoom, zoom * screen_width() / screen_height()),
                 offset: vec2(offset.0, offset.1),
-                ..Default::default()
+                ..Default::default()    
             });
             if is_key_pressed(KeyCode::Escape) {
                 let state = match current_state {
@@ -142,6 +144,8 @@ async fn main() {
             println!("{:#?}",current_state)
         }
         
+
+        //Player Movement
         if matches!(current_state,States::Play) {
             map2.draw_map(texture);
             draw_mobs(&mobs);
@@ -189,14 +193,26 @@ async fn main() {
             AdvanceTileTypes::Chest => 0,
             _ => 2
         };
-        question.user_answer = ask_question(&question,&question.user_answer).to_string();
-        // question.show = true;
+        let sub_state_one = sub_states[1];
+        if !matches!(States::Question, sub_state_one) {
+            question.user_answer = ask_question(&question,&question.user_answer);
+            println!("{}", question.user_answer);
+            if is_key_released(KeyCode::Backspace) {
+                question.user_answer = question.user_answer.remove_last();
+            } 
+        }
+       
+
+        if question.user_answer.eq("true") {
+            println!("correct", );
+        }
+        //load store for player: store is any storage
         if store_check != 2 {
             if !all_storage.contains_key(&current_player){
                 let storage = Storage::default();
                 all_storage.insert(current_player,storage);
             }
-            let alt_state = all_storage[&current_player].alt_state;
+            // let alt_state = all_storage[&current_player].alt_state;
             if is_key_pressed(all_storage[&current_player].key) {
                 sub_states[0] = match sub_states[0] {
                     States::Storage => States::Play,
@@ -215,31 +231,25 @@ async fn main() {
             }
             }
         }
+        // match states of inventory
         if is_key_pressed(KeyCode::I){
             sub_states[1] = match sub_states[1] {
                 States::Inventory => States::Play,
                 _ => States::Inventory,
             }
         }
+        // display inventory
         if matches!(sub_states[1],States::Inventory) {
             player.storage.display_inventory();
         }
     } 
+
+    //Mouse Movement and finding of mouse postion to cell
     y = (((((mouse_position_local()[1] + offset.1)*(screen_height()/screen_width()))/zoom) as i16 | 15)+1)/16 -1;
     x = -((((mouse_position_local()[0] - offset.0)/zoom) as i16 | 15)+1)/16 ;
     player.cor.x = current_player.0;
     player.cor.y = current_player.1;
     if is_mouse_button_down(MouseButton::Left) {
-        if !click.run_state || matches!(sub_states[2],States::OptionInfo) {
-            click.walk_menu(true);
-            sub_states[2] = States::OptionInfo;
-        }
-        if player.cor.distance(&Coordinates {x:x as i16, y: y as i16}) <= PATH_FINDING_RANGE {
-            // found_path = path(x as i32, y as i32, current_player.0 as i32, current_player.1 as i32, &map2.tile_placement);
-            path_leads_to = Coordinates{x:x,y:y};
-        } else {
-            println!("false", );
-        }
         if match  map2.tile_placement[abs(y) as usize][abs(x) as usize] {
             AdvanceTileTypes::Void => true,
             _ => true,
@@ -256,7 +266,7 @@ async fn main() {
         if x < 50 && y < 50{
             draw_text(&(&map2.tile_placement[abs(y) as usize][abs(x) as usize].to_string())[..], 40., screen_height()-40.,40., BLUE);
         }
-        draw_rectangle(screen_width()/2.,screen_height()/2.,10.,10.,GREEN);
+
         next_frame().await
         }
     }

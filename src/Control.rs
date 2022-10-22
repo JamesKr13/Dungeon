@@ -1,5 +1,5 @@
 use macroquad::prelude::*;
-use super::Map::AdvanceTileTypes;
+use super::map::AdvanceTileTypes;
 pub const SPEED: f32 = 16.;
 // use std::collections::HashMap;
 
@@ -11,9 +11,37 @@ pub enum States {
     Storage,
     Empty,
     Play,
-    OptionInfo
+    OptionInfo,
+    Question,
 }
-
+// pub struct ManageStates {
+//     pub main_state: States,
+//     pub question: States,
+//     pub sub_state_one: States,
+//     pub sub_state_two: States,
+// }
+// impl ManageStates {
+//     fn inventory_change_state(&mut self) {
+//         self.sub_state_one = match self.sub_state_one {
+//             States::Inventory => States::Play,
+//             _ => States::Inventory,
+//         }
+//     }
+//     fn storage_change_state(&mut self) {
+//         self.sub_state_two = match self.sub_state_two {
+//             States::Storage => States::Play,
+//             _ => States::Storage,
+//         }
+//     }
+//     fn match_substate_calls(&mut self) {
+//         if matches!(self.question,States::Question) {
+//             match get_char_pressed {
+//                 "i" => self.inventory_change_state(),
+//                 "e" => 
+//             }
+//         }
+//     }
+// }
 pub struct Movement {
     pub up: bool,
     pub down: bool,
