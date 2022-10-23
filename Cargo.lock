@@ -113,7 +113,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c87e182de0887fd5361989c677c4e8f5000cd9491d6d563161a8f3a5519fc7f"
 
 [[package]]
-name = "differ-geon-5"
+name = "differ-geon-12"
 version = "0.1.0"
 dependencies = [
  "euclid",

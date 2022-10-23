@@ -84,7 +84,7 @@ async fn main() {
     });
     let mut black_list: Vec<(i16,i16)> = Vec::new();
     let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
-    let mut mobs = create_mobs(15,&map2.tile_placement);
+    let mut mobs = create_mobs(100,&map2.tile_placement);
     let player_texture_paths = character(&player.character);
     let mob_textures: [[Texture2D;4];4] = [[Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_1.png"),Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_2.png"),Some(ImageFormat::Png))),
