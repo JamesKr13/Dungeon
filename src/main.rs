@@ -78,7 +78,7 @@ async fn main() {
     });
     let mut black_list: Vec<(i16,i16)> = Vec::new();
     let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
-    let mut mobs = create_mobs(1,&map2.tile_placement);
+    let mut mobs = create_mobs(15,&map2.tile_placement);
     let player_texture_paths = character(&player.character);
     let player_texutres: [Texture2D;4] = [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_1.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_2.png"), Some(ImageFormat::Png))),
@@ -107,6 +107,12 @@ async fn main() {
 
         if 0.5 < (period.elapsed().unwrap().subsec_nanos() as f32/100000000.) {
             player.update_player_frame();
+            let exculde_self:  Vec<Coordinates<i16>> = mobs.clone().into_iter().map(|mob| mob.cor).collect();
+            for mob in mobs.iter_mut() {
+                if !mob.consider_action(&map2.tile_placement,player.cor,&exculde_self).is_none(){
+                    clear_background(RED);
+                }
+            }
             period = SystemTime::now();
         }
         
@@ -265,11 +271,7 @@ async fn main() {
         if x < 50 && y < 50{
             draw_text(&(&map2.tile_placement[abs(y) as usize][abs(x) as usize].to_string())[..], 40., screen_height()-40.,40., BLUE);
         }
-        for mob in mobs.iter_mut() {
-            if !mob.consider_action(&map2.tile_placement,player.cor).is_none(){
-                clear_background(RED);
-            }
-        }
+        
         next_frame().await
         }
     }

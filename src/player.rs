@@ -10,6 +10,7 @@ use macroquad::ui::{hash, root_ui, widgets, Skin,Style};
 use super::map::AdvanceTileTypes;
 use std::collections::HashMap;
 
+const CC_RANGE: f32 = 1.;
 pub fn character(char_type:&Character) -> [String; 4]{
     match char_type {
          Character::Priest => ["priest1_v2_1".to_string(),"priest1_v2_2".to_string(),"priest1_v2_3".to_string(),"priest1_v2_4".to_string()],
@@ -25,6 +26,7 @@ impl Coordinates<i16> {
         return (((self.x-other.x).pow(2)+(self.y-other.y).pow(2)) as f32).sqrt();
     }
 }
+#[derive(Clone)]
 pub struct Health {
     points: i16,
     base_health: i16
@@ -65,6 +67,7 @@ impl Inventory {
     }
 
 }
+
 impl Health {
     pub fn adjust(&mut self, increment:i16) -> Option<bool>{
         self.points += increment;
@@ -80,6 +83,7 @@ impl Health {
         }
     }
 }
+#[derive(Clone)]
 pub struct Damage {
     ranged_damage: Option<i16>,
     cc_damage: i16,
@@ -160,19 +164,21 @@ impl PlayerCharacter {
         return frame
     }
 }
-
+#[derive(Clone)]
 pub enum EntityType {
     Vampire
 }
+#[derive(Clone)]
 enum EntityStatus {
     Passive,
     Violent,
     Neutral
 }
+#[derive(Clone)]
 pub struct Entity {
     health: Health,
     damage: Damage,
-    cor: Coordinates<i16>,
+    pub cor: Coordinates<i16>,
     entity_type: EntityType,
     entity_status: EntityStatus,
     movement_points: i16,
@@ -231,7 +237,7 @@ impl Entity {
     fn _update_entity(self) {
         todo!()
     }
-    pub fn consider_action(&mut self,tile_placement: &Vec<Vec<AdvanceTileTypes>>,player: Coordinates<i16>) -> Option<i16>{
+    pub fn consider_action(&mut self,tile_placement: &Vec<Vec<AdvanceTileTypes>>,player: Coordinates<i16>, others: &Vec<Coordinates<i16>>) -> Option<i16>{
         let moves = [(self.cor.x,self.cor.y+1),(self.cor.x,self.cor.y-1),(self.cor.x-1,self.cor.y),(self.cor.x+1,self.cor.y )];
         let possible_moves: Vec<(i16,i16)> = moves.into_iter().filter(|&x| true == match tile_placement[x.1 as usize][x.0 as usize] {
             AdvanceTileTypes::GenericFloor => true,
@@ -240,42 +246,44 @@ impl Entity {
             AdvanceTileTypes::Skull => true,
             AdvanceTileTypes::Chest => true,
             _ => false,
-        }).collect();
+        } && others.iter().any(|cor| cor.x != x.0 && cor.y != x.1)).collect();
+        
         let mut rng = rand::thread_rng();
-        if distance(player.x,player.y,self.cor.x,self.cor.y) <=  15 {
-            let cost = possible_moves.iter().map(|x| distance(player.x,player.x,x.0,x.1)).collect::<Vec<i16>>();
-            let mut proximity_cost = cost.iter();
-            println!("cost = {:#?}, moves {:#?}", cost, possible_moves);
-            if self.health.points <= (self.health.base_health/3){
-                let max = proximity_cost.clone().max().unwrap();
-                if *max >= 4 as i16 {
-                    self.health.adjust(rng.gen_range(1..=10));
+        if possible_moves.len() != 0 {
+            if distance(player.x,player.y,self.cor.x,self.cor.y) <=  30. {
+                let cost = possible_moves.iter().map(|x| distance(player.x,player.y,x.0,x.1)).collect::<Vec<f32>>();
+                let mut proximity_cost = cost.iter();
+                if self.health.points <= (self.health.base_health/3){
+                    let max = proximity_cost.clone().max_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap();
+                    if *max >= 4. {
+                        self.health.adjust(rng.gen_range(1..=10));
+                    } else {
+                        let new_cor = possible_moves[proximity_cost.position(|&x| x == *max).unwrap()];
+                        self.cor = Coordinates {x:new_cor.0,y:new_cor.1};
+                    }
                 } else {
-                    let new_cor = possible_moves[proximity_cost.position(|&x| x == *max).unwrap()];
-                    self.cor = Coordinates {x:new_cor.0,y:new_cor.1};
-                }
-            println!("picked {}", max);
-            } else {
-                if *proximity_cost.clone().min().unwrap() == 1 {
-                    println!("deal", );
-                    return Some(self.damage.deal(Some(1)));
-                    
-                }
-                else {
-                    let min = proximity_cost.clone().min().unwrap();
-                    let new_cor = possible_moves[proximity_cost.position(|&x| x == *min).unwrap()];
-                    self.cor = Coordinates {x:new_cor.0,y:new_cor.1};
-                    
-                    println!("picked min {}", min);
+                    if proximity_cost.clone().min_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap() <= &CC_RANGE {
+                        println!("{},{} one off {},{} because of {}", self.cor.x,self.cor.y,player.x,player.y,*proximity_cost.clone().min_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap());
+                        return Some(self.damage.deal(Some(1)));
+                        
+                    }
+                    else {
+                        let min = proximity_cost.clone().min_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap();
+                        let new_cor = possible_moves[proximity_cost.position(|&x| x == *min).unwrap()];
+                        self.cor = Coordinates {x:new_cor.0,y:new_cor.1};
+                    }
                 }
             }
-        }
-        else {
-            let random_move = rng.gen_range(0..possible_moves.len());
-            self.cor = Coordinates {x:possible_moves[random_move].0,y:possible_moves[random_move].1};
-        }
+            else {
+                let random_move = rng.gen_range(0..possible_moves.len());
+                self.cor = Coordinates {x:possible_moves[random_move].0,y:possible_moves[random_move].1};
+            }
+            None
+    } else {
+        println!("No Move", );
         None
     }
+}
     pub fn draw_entity(&self) {
         // draw_texture_ex(*texture,self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, WHITE, DrawTextureParams {
         //     source: Some(Rect {
@@ -287,8 +295,8 @@ impl Entity {
 }  
 
 }
-fn distance(x: i16,y:i16,x2:i16,y2:i16) -> i16 {
-    (((x2-x).pow(2)+(y2-y).pow(2)) as f32).sqrt() as i16
+fn distance(x: i16,y:i16,x2:i16,y2:i16) -> f32 {
+    (((x2-x).pow(2)+(y2-y).pow(2)) as f32).sqrt() as f32
 }
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Pos(pub i32, pub i32);
