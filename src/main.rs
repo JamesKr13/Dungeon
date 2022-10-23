@@ -140,12 +140,12 @@ async fn main() {
                 mob._update_entity_frame()
             }
             if mob_shift_count == 4 {
-                let mut exculde_self:  Vec<Coordinates<i16>> = mobs.clone().into_iter().map(|mob| mob.cor).collect();
-                for mob in mobs.clone().iter_mut() {
-                    if !mob.consider_action(&map2.tile_placement,player.cor,&exculde_self).is_none(){
+                for mob_index in 0..mobs.len() {
+                    let exculde_self:  Vec<Coordinates<i16>> = mobs.clone().into_iter().map(|mob| mob.cor).collect();
+                    if !mobs[mob_index].consider_action(&map2.tile_placement,player.cor,&exculde_self).is_none(){
                         clear_background(RED);
                     }
-                    exculde_self = mobs.clone().into_iter().map(|mob| mob.cor).collect();
+                    // println!("NM = {},{}", mob.cor.x,mob.cor.y);
                 }
                 mob_shift_count = 0
             }

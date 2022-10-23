@@ -128,12 +128,6 @@ pub struct PlayerCharacter {
 }
 impl PlayerCharacter {
     pub fn intialise(base_health: i16, base_cc:i16, base_range:i16, base_accuracy:f32,spawn: Coordinates<i16>) -> Self{
-        // let mut inventory_initial = [];
-        // for row in 0..inventory_size.1 {
-        //     for col in 0..inventory_size.0 {
-        //          inventory_initial[0][1] =Item::Empty;
-        //     }
-        // }
         Self {
             health: Health::new(base_health),
             damage: Damage::new(base_cc,base_range,base_accuracy),
@@ -218,6 +212,7 @@ impl Entity {
         return None
     }
     pub fn _update_entity_frame(&mut self) {
+        // Match and shift entity frame for which texture is need to be load, for animations
         let frame = match self.frame {
          0 => 1,
          1 => 2,
@@ -228,11 +223,10 @@ impl Entity {
         };
         self.frame = frame;
     }
-    fn _update_entity(self) {
-        todo!()
-    }
     pub fn consider_action(&mut self,tile_placement: &Vec<Vec<AdvanceTileTypes>>,player: Coordinates<i16>, others: &Vec<Coordinates<i16>>) -> Option<i16>{
+        // Creates vector of all possible moves for entities
         let moves = [(self.cor.x,self.cor.y+1),(self.cor.x,self.cor.y-1),(self.cor.x-1,self.cor.y),(self.cor.x+1,self.cor.y )];
+        // Iterates through all moves to find all moves which a valid e.g. no other entities coordiantes or is a valid tiles shown in the match statement
         let possible_moves: Vec<(i16,i16)> = moves.into_iter().filter(|&x| true == match tile_placement[x.1 as usize][x.0 as usize] {
             AdvanceTileTypes::GenericFloor => true,
             AdvanceTileTypes::SmallCHest => true,
@@ -240,55 +234,68 @@ impl Entity {
             AdvanceTileTypes::Skull => true,
             AdvanceTileTypes::Chest => true,
             _ => false,
-        } && others.iter().any(|cor| cor.x != x.0 && cor.y != x.1)).collect();
+        // Iterates through other to find any point where the possible move is invalid
+        } && !others.iter().any(|cor| cor.x == x.0 && cor.y == x.1)).collect();
         
         let mut rng = rand::thread_rng();
+        // As long as there is a move
         if possible_moves.len() != 0 {
+            // If player is within detection range e.g. there coordiantes are less then detection range
             if distance(player.x,player.y,self.cor.x,self.cor.y) <=  30. {
+                // creates a vector of the cost for all moves as the distance betweeen two points
                 let cost = possible_moves.iter().map(|x| distance(player.x,player.y,x.0,x.1)).collect::<Vec<f32>>();
+                // creates an iterator object
                 let mut proximity_cost = cost.iter();
+                // If an entity's health drops below a certain value it would attempt to run away
                 if self.health.points <= (self.health.base_health/3){
+                    // find the highest cost value for a move e.g. move which takes them further away from the player
                     let max = proximity_cost.clone().max_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap();
+                    // is the max value is greater then a certain value it will adjust health/heal
                     if *max >= 4. {
                         self.health.adjust(rng.gen_range(1..=10));
                     } else {
+                        // if not far enough away from the player entity will decide to run away by picking the max cost move
                         let new_cor = possible_moves[proximity_cost.position(|&x| x == *max).unwrap()];
                         self.cor = Coordinates {x:new_cor.0,y:new_cor.1};
                     }
                 } else {
-                    if proximity_cost.clone().min_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap() <= &CC_RANGE {
-                        println!("{},{} one off {},{} because of {}", self.cor.x,self.cor.y,player.x,player.y,*proximity_cost.clone().min_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap());
+                    // Find the smallest cost, which brings it closer to the player
+                    let min = proximity_cost.clone().min_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap();
+                    //if the smallest value is within close combat range the function will return a damage value
+                    if min <= &CC_RANGE {
                         return Some(self.damage.deal(Some(1)));
                         
                     }
                     else {
-                        let min = proximity_cost.clone().min_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap();
+                        // Gets the new coordinates from the smallest cost value
                         let new_cor = possible_moves[proximity_cost.position(|&x| x == *min).unwrap()];
+                        // sets new_cor to mob coordinates
                         self.cor = Coordinates {x:new_cor.0,y:new_cor.1};
                     }
                 }
             }
             else {
+                // If entity is not within detection range moves randomly
                 let random_move = rng.gen_range(0..possible_moves.len());
                 self.cor = Coordinates {x:possible_moves[random_move].0,y:possible_moves[random_move].1};
             }
             None
     } else {
-        println!("No Move", );
         None
     }
 }
     pub fn draw_entity(&self, texture: Texture2D) {
+        // Takes textures and use macroquad draw texture function to display the entity
         draw_texture_ex(texture,self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, WHITE, DrawTextureParams {
             source: Some(Rect {
                x: 0.,y: 0.,w: CELL_SIZE ,h:CELL_SIZE
             }),
             ..Default::default()
-        // draw_rectangle(self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, CELL_SIZE, CELL_SIZE, RED)
         });
     }  
 }
 fn distance(x: i16,y:i16,x2:i16,y2:i16) -> f32 {
+    // Calculates the distant between two points
     (((x2-x).pow(2)+(y2-y).pow(2)) as f32).sqrt() as f32
 }
 // #[cfg(test)]
