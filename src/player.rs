@@ -7,6 +7,8 @@ use super::map::CELL_SIZE;
 use std::fmt;
 use pathfinding::prelude::astar;
 use macroquad::ui::{hash, root_ui, widgets, Skin,Style};
+use super::map::AdvanceTileTypes;
+use std::collections::HashMap;
 
 pub fn character(char_type:&Character) -> [String; 4]{
     match char_type {
@@ -24,7 +26,8 @@ impl Coordinates<i16> {
     }
 }
 pub struct Health {
-    points: i8
+    points: i16,
+    base_health: i16
 }
 pub struct Inventory {
     pub storage: Vec<Item>,
@@ -51,7 +54,7 @@ impl Inventory {
         root_ui().push_skin(&button_skin);
             root_ui().window(hash!(), vec2(0., screen_height() / 15.), vec2(screen_width() / 6., screen_height() * 13.0 / 15.), |ui| {
                 for each_item_index in 0..self.storage.len() {
-                    if widgets::Button::new(&self.storage[each_item_index].to_string()[..])
+                    if widgets::Button::new(&self.storage[each_item_index].item_type.to_string()[..])
                     .position(vec2(0.,0.+each_item_index as f32 * 25.))
                     .ui(ui) {
                         println!("Pushed", );
@@ -63,35 +66,36 @@ impl Inventory {
 
 }
 impl Health {
-    pub fn adjust(&mut self, increment:i8) -> Option<bool>{
+    pub fn adjust(&mut self, increment:i16) -> Option<bool>{
         self.points += increment;
         if self.points >= 0 {
             return Some(false);
         }
         None
     }
-    pub fn new(base_health:i8) -> Self {
+    pub fn new(base_health:i16) -> Self {
         Self {
-            points: base_health
+            points: base_health,
+            base_health: base_health,
         }
     }
 }
 pub struct Damage {
-    ranged_damage: Option<i8>,
-    cc_damage: i8,
+    ranged_damage: Option<i16>,
+    cc_damage: i16,
     accuracy: f32,
 }
 impl Damage {
-    pub fn deal(&self, distance: Option<i16>) -> i8 {
+    pub fn deal(&self, distance: Option<i16>) -> i16 {
         if distance.is_none() {
             return self.cc_damage
         }
         let mut rng = rand::thread_rng();
         let chance: i16 = rng.gen_range(0..=100);
-        let hit = (self.accuracy >= chance as f32) as i8;
+        let hit = (self.accuracy >= chance as f32) as i16;
         return self.ranged_damage.unwrap()*hit
     }
-    pub fn new( base_cc:i8, base_range:i8, base_accuracy:f32) -> Self {
+    pub fn new( base_cc:i16, base_range:i16, base_accuracy:f32) -> Self {
         Self {
             ranged_damage: Some(base_range),
             cc_damage: base_cc,
@@ -115,11 +119,11 @@ pub struct PlayerCharacter {
     pub damage: Damage,
     pub storage: Inventory,
     pub cor: Coordinates<i16>,
-    pub frame: i8,
+    pub frame: i16,
     pub character: Character
 }
 impl PlayerCharacter {
-    pub fn intialise(base_health: i8, base_cc:i8, base_range:i8, base_accuracy:f32,spawn: Coordinates<i16>) -> Self{
+    pub fn intialise(base_health: i16, base_cc:i16, base_range:i16, base_accuracy:f32,spawn: Coordinates<i16>) -> Self{
         // let mut inventory_initial = [];
         // for row in 0..inventory_size.1 {
         //     for col in 0..inventory_size.0 {
@@ -143,7 +147,7 @@ impl PlayerCharacter {
             ..Default::default()
         });
     }
-    pub fn update_player_frame(&mut self) -> i8 {
+    pub fn update_player_frame(&mut self) -> i16 {
         let frame = match self.frame {
          0 => 1,
          1 => 2,
@@ -171,8 +175,8 @@ pub struct Entity {
     cor: Coordinates<i16>,
     entity_type: EntityType,
     entity_status: EntityStatus,
-    movement_points: i8,
-    frame: i8,
+    movement_points: i16,
+    frame: i16,
 
 }
 enum AIOptions {
@@ -189,7 +193,7 @@ impl PartialEq for AIOption {
 }
 impl Eq for AIOption {}
 impl Entity {
-    pub fn intialise(base_health: i8, base_cc:i8, base_range:i8, base_accuracy:f32,spawn:Coordinates<i16>, e_type: EntityType,base_movement_points: i8) -> Self {
+    pub fn intialise(base_health: i16, base_cc:i16, base_range:i16, base_accuracy:f32,spawn:Coordinates<i16>, e_type: EntityType,base_movement_points: i16) -> Self {
         let e_status = match &e_type {
             EntityType::Vampire => EntityStatus::Violent,
         };
@@ -203,7 +207,7 @@ impl Entity {
             frame: 0,
         }
     }
-    fn _attack(&self, target_pos: Coordinates<i16>) -> Option<i8> {
+    fn _attack(&self, target_pos: Coordinates<i16>) -> Option<i16> {
         if !matches!(self.entity_status,EntityStatus::Passive) {
             return Some(match (((self.cor.x-target_pos.x).pow(2)+(self.cor.y-target_pos.y).pow(2)) as f32).sqrt() >= (2.0 as f32).sqrt() {
                 true => self.damage.cc_damage,
@@ -212,7 +216,7 @@ impl Entity {
         }
         return None
     }
-    fn _update_Entity_frame(&mut self) -> i8 {
+    fn _update_Entity_frame(&mut self) -> i16 {
         let frame = match self.frame {
          0 => 1,
          1 => 2,
@@ -227,6 +231,51 @@ impl Entity {
     fn _update_entity(self) {
         todo!()
     }
+    pub fn consider_action(&mut self,tile_placement: &Vec<Vec<AdvanceTileTypes>>,player: Coordinates<i16>) -> Option<i16>{
+        let moves = [(self.cor.x,self.cor.y+1),(self.cor.x,self.cor.y-1),(self.cor.x-1,self.cor.y),(self.cor.x+1,self.cor.y )];
+        let possible_moves: Vec<(i16,i16)> = moves.into_iter().filter(|&x| true == match tile_placement[x.1 as usize][x.0 as usize] {
+            AdvanceTileTypes::GenericFloor => true,
+            AdvanceTileTypes::SmallCHest => true,
+            AdvanceTileTypes::Bones => true,
+            AdvanceTileTypes::Skull => true,
+            AdvanceTileTypes::Chest => true,
+            _ => false,
+        }).collect();
+        let mut rng = rand::thread_rng();
+        if distance(player.x,player.y,self.cor.x,self.cor.y) <=  15 {
+            let cost = possible_moves.iter().map(|x| distance(player.x,player.x,x.0,x.1)).collect::<Vec<i16>>();
+            let mut proximity_cost = cost.iter();
+            println!("cost = {:#?}, moves {:#?}", cost, possible_moves);
+            if self.health.points <= (self.health.base_health/3){
+                let max = proximity_cost.clone().max().unwrap();
+                if *max >= 4 as i16 {
+                    self.health.adjust(rng.gen_range(1..=10));
+                } else {
+                    let new_cor = possible_moves[proximity_cost.position(|&x| x == *max).unwrap()];
+                    self.cor = Coordinates {x:new_cor.0,y:new_cor.1};
+                }
+            println!("picked {}", max);
+            } else {
+                if *proximity_cost.clone().min().unwrap() == 1 {
+                    println!("deal", );
+                    return Some(self.damage.deal(Some(1)));
+                    
+                }
+                else {
+                    let min = proximity_cost.clone().min().unwrap();
+                    let new_cor = possible_moves[proximity_cost.position(|&x| x == *min).unwrap()];
+                    self.cor = Coordinates {x:new_cor.0,y:new_cor.1};
+                    
+                    println!("picked min {}", min);
+                }
+            }
+        }
+        else {
+            let random_move = rng.gen_range(0..possible_moves.len());
+            self.cor = Coordinates {x:possible_moves[random_move].0,y:possible_moves[random_move].1};
+        }
+        None
+    }
     pub fn draw_entity(&self) {
         // draw_texture_ex(*texture,self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, WHITE, DrawTextureParams {
         //     source: Some(Rect {
@@ -235,8 +284,11 @@ impl Entity {
         //     ..Default::default()
         draw_rectangle(self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, CELL_SIZE, CELL_SIZE, RED)
         // });
-}
+}  
 
+}
+fn distance(x: i16,y:i16,x2:i16,y2:i16) -> i16 {
+    (((x2-x).pow(2)+(y2-y).pow(2)) as f32).sqrt() as i16
 }
 #[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Pos(pub i32, pub i32);
