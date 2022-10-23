@@ -296,7 +296,7 @@ impl Entity {
 }
 fn distance(x: i16,y:i16,x2:i16,y2:i16) -> f32 {
     // Calculates the distant between two points
-    (((x2-x).pow(2)+(y2-y).pow(2)) as f32).sqrt() as f32
+    (((x2-x).pow(2)+(y2-y).pow(2)) as f32).sqrt()
 }
 // #[cfg(test)]
 // mod tests {
