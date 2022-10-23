@@ -26,9 +26,15 @@ pub mod traits;
 use crate ::traits::*;
 // use pathfinding::prelude::dijkstra;
 
-fn draw_mobs(mobs: &Vec<Entity>) {
+fn draw_mobs(mobs: &Vec<Entity>, textures: [[Texture2D;4];4]) {
     for mob in mobs{
-        mob.draw_entity();
+        let mob_index = match mob.entity_type {
+            EntityType::Vampire => 0,
+            EntityType::Skelly => 1,
+            EntityType::Skelly2 => 2,
+            EntityType::Skull => 3,
+        };
+        mob.draw_entity(textures[mob_index][mob.frame]);
     }
 }
 
@@ -51,7 +57,7 @@ pub fn create_mobs(number: i8,map: &Vec<Vec<AdvanceTileTypes>>) -> Vec<Entity>{
     let mut all_entity = Vec::new();
     for _ in 0..number {
         let spawn = set_spawn(map);
-        all_entity.push(Entity::intialise(100, 100, 100, 100., Coordinates {x:spawn.0,y:spawn.1} , EntityType::Vampire, 3))
+        all_entity.push(Entity::intialise(100, 100, 100, 100., Coordinates {x:spawn.0,y:spawn.1}));
     } 
     return all_entity
 }    
@@ -80,6 +86,27 @@ async fn main() {
     let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
     let mut mobs = create_mobs(15,&map2.tile_placement);
     let player_texture_paths = character(&player.character);
+    let mob_textures: [[Texture2D;4];4] = [[Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_1.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_2.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_3.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_4.png"),Some(ImageFormat::Png)))],
+    [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skeleton_v1_1.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skeleton_v1_2.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skeleton_v1_3.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skeleton_v1_4.png"),Some(ImageFormat::Png)))],
+    [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skeleton2_v1_1.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skeleton2_v1_2.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skeleton2_v1_3.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skeleton2_v1_4.png"),Some(ImageFormat::Png)))],
+    [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skull_v1_1.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skull_v1_2.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skull_v1_3.png"),Some(ImageFormat::Png))),
+    Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/skull_v1_4.png"),Some(ImageFormat::Png)))]];
+    for mob_texture in mob_textures {
+        for texture in mob_texture {
+            texture.set_filter(FilterMode::Nearest);
+        }
+    }
     let player_texutres: [Texture2D;4] = [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_1.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_2.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_3.png"), Some(ImageFormat::Png))),
@@ -99,6 +126,7 @@ async fn main() {
     question.create("eigen value");
     let mut countdown = CountDown::new_countdown(100);
     let cfg = CFG::default();
+    let mut mob_shift_count = 0;
     loop {
         let mut click = ClickActions {
             run_state: false,
@@ -107,11 +135,19 @@ async fn main() {
 
         if 0.5 < (period.elapsed().unwrap().subsec_nanos() as f32/100000000.) {
             player.update_player_frame();
-            let exculde_self:  Vec<Coordinates<i16>> = mobs.clone().into_iter().map(|mob| mob.cor).collect();
-            for mob in mobs.iter_mut() {
-                if !mob.consider_action(&map2.tile_placement,player.cor,&exculde_self).is_none(){
-                    clear_background(RED);
+            mob_shift_count += 1;
+            for mob in &mut mobs {
+                mob._update_entity_frame()
+            }
+            if mob_shift_count == 4 {
+                let mut exculde_self:  Vec<Coordinates<i16>> = mobs.clone().into_iter().map(|mob| mob.cor).collect();
+                for mob in mobs.clone().iter_mut() {
+                    if !mob.consider_action(&map2.tile_placement,player.cor,&exculde_self).is_none(){
+                        clear_background(RED);
+                    }
+                    exculde_self = mobs.clone().into_iter().map(|mob| mob.cor).collect();
                 }
+                mob_shift_count = 0
             }
             period = SystemTime::now();
         }
@@ -153,7 +189,7 @@ async fn main() {
         //Player Movement
         if matches!(current_state,States::Play) {
             map2.draw_map(texture);
-            draw_mobs(&mobs);
+            draw_mobs(&mobs,mob_textures);
             draw_rectangle_lines(abs(x) as f32 *CELL_SIZE,abs(y) as f32 * CELL_SIZE,CELL_SIZE,CELL_SIZE,3.,GOLD);
             if matches!(sub_states[0],States::Play) && matches!(sub_states[1],States::Play) {
                 let mut movement = Movement {

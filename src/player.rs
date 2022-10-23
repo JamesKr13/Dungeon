@@ -166,7 +166,7 @@ impl PlayerCharacter {
 }
 #[derive(Clone)]
 pub enum EntityType {
-    Vampire
+    Vampire,Skelly,Skelly2,Skull
 }
 #[derive(Clone)]
 enum EntityStatus {
@@ -179,29 +179,25 @@ pub struct Entity {
     health: Health,
     damage: Damage,
     pub cor: Coordinates<i16>,
-    entity_type: EntityType,
+    pub entity_type: EntityType,
     entity_status: EntityStatus,
-    movement_points: i16,
-    frame: i16,
+    pub frame: usize,
 
 }
-enum AIOptions {
-    Move, Attack, Heal, LookAround, Panic, AvoidPlayer, Group
-}
-struct AIOption {
-    aioid: i32,
-    option: AIOptions,
-}
-impl PartialEq for AIOption {
-    fn eq(&self, other: &Self) -> bool {
-        self.aioid == other.aioid
-    }
-}
-impl Eq for AIOption {}
 impl Entity {
-    pub fn intialise(base_health: i16, base_cc:i16, base_range:i16, base_accuracy:f32,spawn:Coordinates<i16>, e_type: EntityType,base_movement_points: i16) -> Self {
+    pub fn intialise(base_health: i16, base_cc:i16, base_range:i16, base_accuracy:f32,spawn:Coordinates<i16>) -> Self {
+        
+        let mut rng = rand::thread_rng();
+        let random_mob = rng.gen_range(0..4);
+        let e_type =  match random_mob {
+            0 => EntityType::Vampire,
+            1 => EntityType::Skelly,
+            2 => EntityType::Skelly2,
+            3 => EntityType::Skull,
+            _ => EntityType::Skelly2,
+        };
         let e_status = match &e_type {
-            EntityType::Vampire => EntityStatus::Violent,
+            _ => EntityStatus::Violent,
         };
         Self {
             health: Health::new(base_health),
@@ -209,7 +205,6 @@ impl Entity {
             cor: spawn,
             entity_type: e_type,
             entity_status: e_status,
-            movement_points: base_movement_points,
             frame: 0,
         }
     }
@@ -222,7 +217,7 @@ impl Entity {
         }
         return None
     }
-    fn _update_Entity_frame(&mut self) -> i16 {
+    pub fn _update_entity_frame(&mut self) {
         let frame = match self.frame {
          0 => 1,
          1 => 2,
@@ -232,7 +227,6 @@ impl Entity {
          
         };
         self.frame = frame;
-        return frame
     }
     fn _update_entity(self) {
         todo!()
@@ -284,73 +278,25 @@ impl Entity {
         None
     }
 }
-    pub fn draw_entity(&self) {
-        // draw_texture_ex(*texture,self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, WHITE, DrawTextureParams {
-        //     source: Some(Rect {
-        //        x: 0.,y: 0.,w: CELL_SIZE ,h:CELL_SIZE
-        //     }),
-        //     ..Default::default()
-        draw_rectangle(self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, CELL_SIZE, CELL_SIZE, RED)
-        // });
-}  
-
+    pub fn draw_entity(&self, texture: Texture2D) {
+        draw_texture_ex(texture,self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, WHITE, DrawTextureParams {
+            source: Some(Rect {
+               x: 0.,y: 0.,w: CELL_SIZE ,h:CELL_SIZE
+            }),
+            ..Default::default()
+        // draw_rectangle(self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, CELL_SIZE, CELL_SIZE, RED)
+        });
+    }  
 }
 fn distance(x: i16,y:i16,x2:i16,y2:i16) -> f32 {
     (((x2-x).pow(2)+(y2-y).pow(2)) as f32).sqrt() as f32
 }
-#[derive(Clone, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct Pos(pub i32, pub i32);
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-impl Pos {
-  fn distance(&self, other: &Pos) -> u32 {
-    (self.0.abs_diff(other.0) + self.1.abs_diff(other.1)) as u32
-  }
-
-  fn successors(&self) -> Vec<(Pos, u32)> {
-    let &Pos(x, y) = self;
-    let next_tiles: Vec<(Pos, u32)> = vec![Pos(x+1,y+1), Pos(x+1,y-1), Pos(x-1,y+1), Pos(x-1,y-1),
-         Pos(x+1,y+1), Pos(x+1,y-1), Pos(x-1,y+1), Pos(x-1,y-1)]
-         .into_iter().map(|p| (p, 1)).collect();
-  return next_tiles
-}
-}
-pub fn output_shortest_path(goal: &Pos, start: &Pos) {
-    let path = astar(start, |p| p.successors(), |p| p.distance(goal) / 3,
-                   |p| p == goal);
-    println!("{:#?}", path);
-}
-// struct EntityAI {
-//     probability_of_actions: HashMap<AIOptions,f32>,
-// }
-// impl Default for EntityAI {
-//     fn default() -> Self {
-//         Self {
-
-//         }
+//     #[test]
+//     fn test_distance() {
+//         assert_eq!(distance(2,3,4,5),2.*(2 as f32).sqrt())
 //     }
 // }
-
-// pub struct PathFinder {
-//     goal: Coordinates<i16>,
-//     start: Coordinates<i16>,
-// }
-// impl PathFinder {
-//     fn verify_move(self,tile_placement: Vec<Vec<AdvanceTileTypes>>, verifying_move: Coordinates<i16>) -> bool{
-//         match tile_placement[verifying_move.y as usize][verifying_move.x as usize] {
-//         AdvanceTileTypes::BLCorner => false,
-//         AdvanceTileTypes::BRCorner => false,
-//         AdvanceTileTypes::TLCorner => false,
-//         AdvanceTileTypes::TRCorner => false,
-//         AdvanceTileTypes::LEdge => false,
-//         AdvanceTileTypes::REdge => false,
-//         AdvanceTileTypes::TEdge => false,
-//         AdvanceTileTypes::BEdge => false,
-//         AdvanceTileTypes::OBRCorner=> false,
-//         AdvanceTileTypes::OBLCorner => false,
-//         AdvanceTileTypes::OTLCorner => false,
-//         AdvanceTileTypes::OTRCorner => false,
-//         AdvanceTileTypes::Rock => false,
-//         _ => true,
-//         }
-//     }
-//     pub fn path_find
