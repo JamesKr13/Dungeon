@@ -136,34 +136,33 @@ async fn main() {
             on_set_mouse_position: Coordinates {x:0.,y:0.}
         };
 
-        if 0.5 < (period.elapsed().unwrap().subsec_nanos() as f32/100000000.) {
-            player.update_player_frame();
-            mob_shift_count += 1;
-            for mob in &mut mobs {
-                mob._update_entity_frame()
-            }
-            if mob_shift_count == 4 {
-                for mob_index in 0..mobs.len() {
-                    let exculde_self:  Vec<Coordinates<i16>> = mobs.clone().into_iter().map(|mob| mob.cor).collect();
-                    if !mobs[mob_index].consider_action(&map2.tile_placement,player.cor,&exculde_self).is_none(){
-                        player.health.adjust(-1);
-                        clear_background(RED);
-                    }
-                    // println!("NM = {},{}", mob.cor.x,mob.cor.y);
-                }
-                mob_shift_count = 0
-            }
-            period = SystemTime::now();
-        }
         
-        
-        if !countdown.check() {
-            println!("You are dead", );
-        }
-        if is_key_pressed(KeyCode::P) {
-            println!("{}",cfg.create_sentence("S".to_string()));
-        }
         if !matches!(current_state,States::Menu) {
+            if 0.5 < (period.elapsed().unwrap().subsec_nanos() as f32/100000000.) {
+                player.update_player_frame();
+                mob_shift_count += 1;
+                for mob in &mut mobs {
+                    mob._update_entity_frame()
+                }
+                if mob_shift_count == 4 {
+                    for mob_index in 0..mobs.len() {
+                        let exculde_self:  Vec<Coordinates<i16>> = mobs.clone().into_iter().map(|mob| mob.cor).collect();
+                        if !mobs[mob_index].consider_action(&map2.tile_placement,player.cor,&exculde_self).is_none(){
+                            let life_state = player.health.adjust(-1);
+                            if !life_state.is_none() {
+                                
+                            }
+                        }
+                        // println!("NM = {},{}", mob.cor.x,mob.cor.y);
+                    }
+                    mob_shift_count = 0
+                }
+                period = SystemTime::now();
+            }
+            
+            if is_key_pressed(KeyCode::P) {
+                println!("{}",cfg.create_sentence("S".to_string()));
+            }
             set_camera(&Camera2D {
                 target: vec2(target.0, target.1),
                 rotation: smooth_rotation,
@@ -190,7 +189,7 @@ async fn main() {
         }
         
 
-        //Player Movement
+        //Main loop
         if matches!(current_state,States::Play) {
             map2.draw_map(texture);
             draw_mobs(&mobs,mob_textures,hud);
@@ -287,8 +286,7 @@ async fn main() {
         if matches!(sub_states[1],States::Inventory) {
             player.storage.display_inventory();
         }
-    } 
-    player.health.draw_health(hud,screen_width()/50.,screen_height()/50., vec2(32.,64.),true);
+        player.health.draw_health(hud,screen_width()/50.,screen_height()/50., vec2(32.,64.),true);
     //Mouse Movement and finding of mouse postion to cell
     y = (((((mouse_position_local()[1] + offset.1)*(screen_height()/screen_width()))/zoom) as i16 | 15)+1)/16 -1;
     x = -((((mouse_position_local()[0] - offset.0)/zoom) as i16 | 15)+1)/16 ;
@@ -311,6 +309,10 @@ async fn main() {
         if x < 50 && y < 50{
             draw_text(&(&map2.tile_placement[abs(y) as usize][abs(x) as usize].to_string())[..], 40., screen_height()-40.,40., BLUE);
         }
+    } else {
+        println!("Menu", );
+    }
+    
         
         next_frame().await
         }
