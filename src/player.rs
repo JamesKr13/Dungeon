@@ -28,7 +28,7 @@ impl Coordinates<i16> {
 }
 #[derive(Clone)]
 pub struct Health {
-    points: i16,
+    pub points: i16,
     base_health: i16
 }
 pub struct Inventory {
@@ -70,17 +70,60 @@ impl Inventory {
 
 impl Health {
     pub fn adjust(&mut self, increment:i16) -> Option<bool>{
-        self.points += increment;
-        if self.points >= 0 {
-            return Some(false);
+        if self.points+increment >= 0 {
+            self.points += increment;
+            return None;
         }
-        None
+        return Some(false)
     }
     pub fn new(base_health:i16) -> Self {
         Self {
             points: base_health,
             base_health: base_health,
         }
+    }
+    pub fn draw_health(&self, texture: Texture2D,x:f32,y:f32, dest_size: Vec2) {
+        draw_texture_ex(texture,x,y,WHITE, DrawTextureParams {
+            dest_size: Some(dest_size), source: Some(Rect {x:96.,y:52.,w: 8.,h:16.}), ..Default::default()
+        });
+        draw_texture_ex(texture,x+dest_size[0],y,WHITE, DrawTextureParams {
+            dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
+        });
+        draw_texture_ex(texture,x+2.*dest_size[0],y,WHITE, DrawTextureParams {
+            dest_size: Some(vec2(dest_size[0]*2.,dest_size[1])), source: Some(Rect {x:60.,y:44.,w: 16.,h:16.}), ..Default::default()
+        });
+        draw_texture_ex(texture,x+4.*dest_size[0],y,WHITE, DrawTextureParams {
+            dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
+        });
+        for i in 0..self.base_health {
+        draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*i as f32,y,WHITE, DrawTextureParams {
+            dest_size: Some(dest_size), source: Some(Rect {x:96.,y:12.,w: 8.,h:16.}), ..Default::default()
+            });
+        }
+ 
+        for i in 0..self.points-1 {
+            draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*i as f32,y,WHITE, DrawTextureParams {
+                dest_size: Some(dest_size), source: Some(Rect {x:104.,y:32.,w: 8.,h:16.}), ..Default::default()
+                });
+            }
+        if self.base_health-self.points != 0 &&  self.points != 0{
+            draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*(self.points-1) as f32,y,WHITE, DrawTextureParams {
+                dest_size: Some(dest_size), source: Some(Rect {x:112.,y:32.,w: 8.,h:16.}), ..Default::default()
+                });
+            }
+            else {
+                if self.points != 0 {
+                    draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*(self.points-1) as f32,y,WHITE, DrawTextureParams {
+                        dest_size: Some(dest_size), source: Some(Rect {x:104.,y:32.,w: 8.,h:16.}), ..Default::default()
+                        });
+                }
+                }
+        draw_texture_ex(texture,x+5.*dest_size[0] +dest_size[0]*(self.base_health-1) as f32,y,WHITE, DrawTextureParams {
+            dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
+        });
+        draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*(self.base_health) as f32,y,WHITE, DrawTextureParams {
+            dest_size: Some(dest_size), source: Some(Rect {x:96.,y:52.,w: 8.,h:16.}), flip_x: true, ..Default::default()
+        });
     }
 }
 #[derive(Clone)]

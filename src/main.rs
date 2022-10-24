@@ -78,7 +78,7 @@ async fn main() {
     let mut x = 0;
     let mut y = 0;
     let mut selected = (0,0);
-    let mut player = PlayerCharacter::intialise(100,100,100,30.,Coordinates {
+    let mut player = PlayerCharacter::intialise(10,10,10,30.,Coordinates {
         x:current_player.0,
         y:current_player.1
     });
@@ -86,6 +86,8 @@ async fn main() {
     let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
     let mut mobs = create_mobs(15,&map2.tile_placement);
     let player_texture_paths = character(&player.character);
+    let hud = Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/hud-pieces.png"),Some(ImageFormat::Png)));
+    hud.set_filter(FilterMode::Nearest);
     let mob_textures: [[Texture2D;4];4] = [[Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_1.png"),Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_2.png"),Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_3.png"),Some(ImageFormat::Png))),
@@ -143,6 +145,7 @@ async fn main() {
                 for mob_index in 0..mobs.len() {
                     let exculde_self:  Vec<Coordinates<i16>> = mobs.clone().into_iter().map(|mob| mob.cor).collect();
                     if !mobs[mob_index].consider_action(&map2.tile_placement,player.cor,&exculde_self).is_none(){
+                        player.health.adjust(-1);
                         clear_background(RED);
                     }
                     // println!("NM = {},{}", mob.cor.x,mob.cor.y);
@@ -284,7 +287,7 @@ async fn main() {
             player.storage.display_inventory();
         }
     } 
-
+    player.health.draw_health(hud,screen_width()/50.,screen_height()/50., vec2(32.,64.));
     //Mouse Movement and finding of mouse postion to cell
     y = (((((mouse_position_local()[1] + offset.1)*(screen_height()/screen_width()))/zoom) as i16 | 15)+1)/16 -1;
     x = -((((mouse_position_local()[0] - offset.0)/zoom) as i16 | 15)+1)/16 ;
