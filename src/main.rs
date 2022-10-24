@@ -78,14 +78,13 @@ async fn main() {
     let mut x = 0;
     let mut y = 0;
     let mut selected = (0,0);
-    let mut player = PlayerCharacter::intialise(10,10,10,30.,Coordinates {
+    let mut player = PlayerCharacter::intialise(1000,10,10,30.,Coordinates {
         x:current_player.0,
         y:current_player.1
     });
     let mut black_list: Vec<(i16,i16)> = Vec::new();
     let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
     let mut mobs = create_mobs(15,&map2.tile_placement);
-    let player_texture_paths = character(&player.character);
     let hud = Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/hud-pieces.png"),Some(ImageFormat::Png)));
     hud.set_filter(FilterMode::Nearest);
     let mob_textures: [[Texture2D;4];4] = [[Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_1.png"),Some(ImageFormat::Png))),
@@ -138,27 +137,7 @@ async fn main() {
 
         
         if !matches!(current_state,States::Menu) {
-            if 0.5 < (period.elapsed().unwrap().subsec_nanos() as f32/100000000.) {
-                player.update_player_frame();
-                mob_shift_count += 1;
-                for mob in &mut mobs {
-                    mob._update_entity_frame()
-                }
-                if mob_shift_count == 4 {
-                    for mob_index in 0..mobs.len() {
-                        let exculde_self:  Vec<Coordinates<i16>> = mobs.clone().into_iter().map(|mob| mob.cor).collect();
-                        if !mobs[mob_index].consider_action(&map2.tile_placement,player.cor,&exculde_self).is_none(){
-                            let life_state = player.health.adjust(-1);
-                            if !life_state.is_none() {
-                                
-                            }
-                        }
-                        // println!("NM = {},{}", mob.cor.x,mob.cor.y);
-                    }
-                    mob_shift_count = 0
-                }
-                period = SystemTime::now();
-            }
+            
             
             if is_key_pressed(KeyCode::P) {
                 println!("{}",cfg.create_sentence("S".to_string()));
@@ -181,9 +160,6 @@ async fn main() {
                     current_state = state;
                 }
             }
-            if matches!(current_state,States::Pause) {
-                clear_background(GREEN);
-            }
         if is_key_pressed(KeyCode::A) {
             println!("{:#?}",current_state)
         }
@@ -191,6 +167,27 @@ async fn main() {
 
         //Main loop
         if matches!(current_state,States::Play) {
+            if 0.5 < (period.elapsed().unwrap().subsec_nanos() as f32/100000000.) {
+                player.update_player_frame();
+                mob_shift_count += 1;
+                for mob in &mut mobs {
+                    mob._update_entity_frame()
+                }
+                if mob_shift_count == 4 {
+                    for mob_index in 0..mobs.len() {
+                        let exculde_self:  Vec<Coordinates<i16>> = mobs.clone().into_iter().map(|mob| mob.cor).collect();
+                        if !mobs[mob_index].consider_action(&map2.tile_placement,player.cor,&exculde_self).is_none(){
+                            let life_state = player.health.adjust(-1);
+                            if !life_state.is_none() {
+                                current_state = States::Menu;
+                            }
+                        }
+                        // println!("NM = {},{}", mob.cor.x,mob.cor.y);
+                    }
+                    mob_shift_count = 0
+                }
+                period = SystemTime::now();
+            }
             map2.draw_map(texture);
             draw_mobs(&mobs,mob_textures,hud);
             draw_rectangle_lines(abs(x) as f32 *CELL_SIZE,abs(y) as f32 * CELL_SIZE,CELL_SIZE,CELL_SIZE,3.,GOLD);
@@ -216,7 +213,6 @@ async fn main() {
                 }
             }
             // draw_rectangle(current_player.0 as f32 *CELL_SIZE,current_player.1 as f32 *CELL_SIZE,CELL_SIZE,CELL_SIZE,RED);
-        }
         player.draw_player(player_texutres[player.frame as usize]);
         if !&found_path.is_none() {
             for tile_move in &found_path.clone().unwrap().0 {
@@ -306,9 +302,10 @@ async fn main() {
     if selected != (x,y) {
         sub_states[2] = States::Play;
     }
-        if x < 50 && y < 50{
+        if x < WORLD_SIZE.0 as i16 && y < WORLD_SIZE.1 as i16{
             draw_text(&(&map2.tile_placement[abs(y) as usize][abs(x) as usize].to_string())[..], 40., screen_height()-40.,40., BLUE);
         }
+    }
     } else {
         println!("Menu", );
     }
