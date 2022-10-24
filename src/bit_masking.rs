@@ -1,71 +1,71 @@
 // use super::BSPMapGeneration::*;
+use super::bsp_tree_map_generation::{BSPTree, TileType, WORLD_SIZE};
 use super::map::AdvanceTileTypes;
-use super::bsp_tree_map_generation::*;
 
-const SEARCH: (i16,i16,i16,i16,i16,i16,i16,i16) = (1,2,4,8,16,32,64,128);
+const SEARCH: (i16, i16, i16, i16, i16, i16, i16, i16) = (1, 2, 4, 8, 16, 32, 64, 128);
 #[derive(Clone)]
 pub struct BitMaskMap {
-    pub exit: (i32,i32),
+    pub exit: (i32, i32),
     pub map: Vec<Vec<TileType>>,
     pub tile_map: Vec<Vec<AdvanceTileTypes>>,
-    pub x: Vec<[(i16,i16);2]>
+    pub x: Vec<[(i16, i16); 2]>,
 }
 impl Default for BitMaskMap {
     fn default() -> Self {
         let mut map = BSPTree::default();
-        println!("BitMask Default", );
+        println!("BitMask Default",);
         map.generate_level();
         Self {
-            exit: (0,0),
+            exit: (0, 0),
             map: map.level,
-            tile_map: vec![vec![AdvanceTileTypes::Void;WORLD_SIZE.0]; WORLD_SIZE.1],
-            x: map.x
+            tile_map: vec![vec![AdvanceTileTypes::Void; WORLD_SIZE.0]; WORLD_SIZE.1],
+            x: map.x,
         }
     }
 }
 impl BitMaskMap {
-    fn match_bit(&mut self, tile:&TileType) -> i16 {
+    fn match_bit(&mut self, tile: &TileType) -> i16 {
         match tile {
             TileType::Wall => 0,
             TileType::Floor => 1,
         }
     }
-    fn sum(&mut self,value: [i16;8]) -> i16{
+    fn sum(&mut self, value: [i16; 8]) -> i16 {
         let mut total = 0;
         for num in value {
             total += num;
         }
         total
     }
-    fn directional_compare(&mut self, row: usize, column: usize) -> AdvanceTileTypes{
+    fn directional_compare(&mut self, row: usize, column: usize) -> AdvanceTileTypes {
         // Note to Self: Dude what the fuck, 8 bit masking, the fuck man, just use 4 bit masking to check and detect corners
-        let mut total: [i16; 8] = [0;8];
-        if row != 0{
-            total[1] = SEARCH.1 * self.match_bit(&self.map[row-1][column].clone());
+        let mut total: [i16; 8] = [0; 8];
+        if row != 0 {
+            total[1] = SEARCH.1 * self.match_bit(&self.map[row - 1][column].clone());
             if column != 0 {
-                total[0] = SEARCH.0 * self.match_bit(&self.map[row-1][column-1].clone());
-            } 
-            if column <= WORLD_SIZE.1-2 {
-                total[2] = SEARCH.2 * self.match_bit(&self.map[row-1][column+1].clone());
+                total[0] = SEARCH.0 * self.match_bit(&self.map[row - 1][column - 1].clone());
+            }
+            if column <= WORLD_SIZE.1 - 2 {
+                total[2] = SEARCH.2 * self.match_bit(&self.map[row - 1][column + 1].clone());
             }
         }
-        if row <= WORLD_SIZE.0-2 {
-            total[6] = SEARCH.6 * self.match_bit(&self.map[row+1][column].clone());
+        if row <= WORLD_SIZE.0 - 2 {
+            total[6] = SEARCH.6 * self.match_bit(&self.map[row + 1][column].clone());
             if column != 0 {
-                total[5] = SEARCH.5 * self.match_bit(&self.map[row+1][column-1].clone());
-            } 
-            if column <= WORLD_SIZE.1-2 {
-                total[7] = SEARCH.7 * self.match_bit(&self.map[row+1][column+1].clone());
+                total[5] = SEARCH.5 * self.match_bit(&self.map[row + 1][column - 1].clone());
+            }
+            if column <= WORLD_SIZE.1 - 2 {
+                total[7] = SEARCH.7 * self.match_bit(&self.map[row + 1][column + 1].clone());
             }
         }
         if column != 0 {
-            total[3] = SEARCH.3 * self.match_bit(&self.map[row][column-1].clone());
+            total[3] = SEARCH.3 * self.match_bit(&self.map[row][column - 1].clone());
         }
-        if column <= WORLD_SIZE.1-2 {
-            total[4] = SEARCH.4 * self.match_bit(&self.map[row][column+1].clone());
+        if column <= WORLD_SIZE.1 - 2 {
+            total[4] = SEARCH.4 * self.match_bit(&self.map[row][column + 1].clone());
         }
         let inital = self.match_bit(&self.map[row][column].clone());
-        match self.sum(total)*inital{
+        match self.sum(total) * inital {
             2 => AdvanceTileTypes::GenericFloor,
             8 => AdvanceTileTypes::TEdge,
             10 => AdvanceTileTypes::TEdge,
@@ -104,14 +104,14 @@ impl BitMaskMap {
             111 => AdvanceTileTypes::REdge,
             118 => AdvanceTileTypes::LEdge,
             120 => AdvanceTileTypes::REdge,
-            122 => AdvanceTileTypes::GenericFloor,//?
+            122 => AdvanceTileTypes::GenericFloor, //?
             123 => AdvanceTileTypes::GenericFloor,
             124 => AdvanceTileTypes::REdge,
             126 => AdvanceTileTypes::BLCorner,
             127 => AdvanceTileTypes::OTRCorner,
             143 => AdvanceTileTypes::BRCorner,
             145 => AdvanceTileTypes::TLCorner,
-            150 => AdvanceTileTypes::BLCorner,//Ledge
+            150 => AdvanceTileTypes::BLCorner, //Ledge
             151 => AdvanceTileTypes::BLCorner,
             159 => AdvanceTileTypes::BEdge, //is a corner
             191 => AdvanceTileTypes::BEdge,
@@ -127,7 +127,7 @@ impl BitMaskMap {
             218 => AdvanceTileTypes::TEdge,
             219 => AdvanceTileTypes::TEdge,
             222 => AdvanceTileTypes::TEdge,
-            223 => AdvanceTileTypes::OTLCorner,//Corner Piece
+            223 => AdvanceTileTypes::OTLCorner, //Corner Piece
             232 => AdvanceTileTypes::REdge,
             233 => AdvanceTileTypes::REdge,
             235 => AdvanceTileTypes::REdge,
@@ -153,9 +153,8 @@ impl BitMaskMap {
     pub fn tile_map(&mut self) {
         for row in 0..WORLD_SIZE.1 {
             for column in 0..WORLD_SIZE.0 {
-                self.tile_map[row][column] = self.directional_compare(row,column);
+                self.tile_map[row][column] = self.directional_compare(row, column);
             }
-
         }
     }
 }
