@@ -82,48 +82,63 @@ impl Health {
             base_health: base_health,
         }
     }
-    pub fn draw_health(&self, texture: Texture2D,x:f32,y:f32, dest_size: Vec2) {
-        draw_texture_ex(texture,x,y,WHITE, DrawTextureParams {
-            dest_size: Some(dest_size), source: Some(Rect {x:96.,y:52.,w: 8.,h:16.}), ..Default::default()
-        });
-        draw_texture_ex(texture,x+dest_size[0],y,WHITE, DrawTextureParams {
-            dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
-        });
-        draw_texture_ex(texture,x+2.*dest_size[0],y,WHITE, DrawTextureParams {
-            dest_size: Some(vec2(dest_size[0]*2.,dest_size[1])), source: Some(Rect {x:60.,y:44.,w: 16.,h:16.}), ..Default::default()
-        });
-        draw_texture_ex(texture,x+4.*dest_size[0],y,WHITE, DrawTextureParams {
-            dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
-        });
-        for i in 0..self.base_health {
-        draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*i as f32,y,WHITE, DrawTextureParams {
-            dest_size: Some(dest_size), source: Some(Rect {x:96.,y:12.,w: 8.,h:16.}), ..Default::default()
+    pub fn draw_health(&self, texture: Texture2D,x:f32,y:f32, dest_size: Vec2, is_player: bool) {
+        let mut shift = 0;
+        if is_player {
+
+            draw_texture_ex(texture,x+dest_size[0],y,WHITE, DrawTextureParams {
+                dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
             });
+            draw_texture_ex(texture,x+2.*dest_size[0],y,WHITE, DrawTextureParams {
+                dest_size: Some(vec2(dest_size[0]*2.,dest_size[1])), source: Some(Rect {x:60.,y:44.,w: 16.,h:16.}), ..Default::default()
+            });
+            draw_texture_ex(texture,x+4.*dest_size[0],y,WHITE, DrawTextureParams {
+                dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
+            });
+            shift = 4
         }
- 
+        draw_bar(x,y,texture,dest_size,self.base_health as usize,shift);
+        // draw_texture_ex(texture,x,y,WHITE, DrawTextureParams {
+        //     dest_size: Some(dest_size), source: Some(Rect {x:96.,y:52.,w: 8.,h:16.}), ..Default::default()
+        // });
+        // draw_texture_ex(texture,x+dest_size[0],y,WHITE, DrawTextureParams {
+        //     dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
+        // });
+        // draw_texture_ex(texture,x+2.*dest_size[0],y,WHITE, DrawTextureParams {
+        //     dest_size: Some(vec2(dest_size[0]*2.,dest_size[1])), source: Some(Rect {x:60.,y:44.,w: 16.,h:16.}), ..Default::default()
+        // });
+        // draw_texture_ex(texture,x+4.*dest_size[0],y,WHITE, DrawTextureParams {
+        //     dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
+        // });
+        // for i in 0..self.base_health {
+        // draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*i as f32,y,WHITE, DrawTextureParams {
+        //     dest_size: Some(dest_size), source: Some(Rect {x:96.,y:12.,w: 8.,h:16.}), ..Default::default()
+        //     });
+        // }
+       
         for i in 0..self.points-1 {
-            draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*i as f32,y,WHITE, DrawTextureParams {
+            draw_texture_ex(texture,x+(shift as f32 + 1.)*dest_size[0]+dest_size[0]*i as f32,y,WHITE, DrawTextureParams {
                 dest_size: Some(dest_size), source: Some(Rect {x:104.,y:32.,w: 8.,h:16.}), ..Default::default()
                 });
             }
         if self.base_health-self.points != 0 &&  self.points != 0{
-            draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*(self.points-1) as f32,y,WHITE, DrawTextureParams {
+            draw_texture_ex(texture,x+(shift as f32 + 1.)*dest_size[0]+dest_size[0]*(self.points-1) as f32,y,WHITE, DrawTextureParams {
                 dest_size: Some(dest_size), source: Some(Rect {x:112.,y:32.,w: 8.,h:16.}), ..Default::default()
                 });
             }
             else {
                 if self.points != 0 {
-                    draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*(self.points-1) as f32,y,WHITE, DrawTextureParams {
+                    draw_texture_ex(texture,x+(shift as f32 + 1.)*dest_size[0]+dest_size[0]*(self.points-1) as f32,y,WHITE, DrawTextureParams {
                         dest_size: Some(dest_size), source: Some(Rect {x:104.,y:32.,w: 8.,h:16.}), ..Default::default()
                         });
                 }
                 }
-        draw_texture_ex(texture,x+5.*dest_size[0] +dest_size[0]*(self.base_health-1) as f32,y,WHITE, DrawTextureParams {
-            dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
-        });
-        draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*(self.base_health) as f32,y,WHITE, DrawTextureParams {
-            dest_size: Some(dest_size), source: Some(Rect {x:96.,y:52.,w: 8.,h:16.}), flip_x: true, ..Default::default()
-        });
+        // draw_texture_ex(texture,x+5.*dest_size[0] +dest_size[0]*(self.base_health-1) as f32,y,WHITE, DrawTextureParams {
+        //     dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
+        // });
+        // draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*(self.base_health) as f32,y,WHITE, DrawTextureParams {
+        //     dest_size: Some(dest_size), source: Some(Rect {x:96.,y:52.,w: 8.,h:16.}), flip_x: true, ..Default::default()
+        // });
     }
 }
 #[derive(Clone)]
@@ -327,8 +342,9 @@ impl Entity {
         None
     }
 }
-    pub fn draw_entity(&self, texture: Texture2D) {
+    pub fn draw_entity(&self, texture: Texture2D, hud_texture: Texture2D) {
         // Takes textures and use macroquad draw texture function to display the entity
+        self.health.draw_health(hud_texture,self.cor.x as f32*CELL_SIZE,self.cor.y as f32 * CELL_SIZE -4. ,vec2(2.,4.),false);
         draw_texture_ex(texture,self.cor.x as f32 * CELL_SIZE, self.cor.y as f32 * CELL_SIZE, WHITE, DrawTextureParams {
             source: Some(Rect {
                x: 0.,y: 0.,w: CELL_SIZE ,h:CELL_SIZE
@@ -350,3 +366,20 @@ fn distance(x: i16,y:i16,x2:i16,y2:i16) -> f32 {
 //         assert_eq!(distance(2,3,4,5),2.*(2 as f32).sqrt())
 //     }
 // }
+pub fn draw_bar(x:f32,y:f32, texture: Texture2D, dest_size: Vec2, inner_length: usize, shift: i8) {
+    draw_texture_ex(texture,x,y,WHITE, DrawTextureParams {
+        dest_size: Some(dest_size), source: Some(Rect {x:96.,y:52.,w: 8.,h:16.}), ..Default::default()
+    });
+    
+    for i in 0..inner_length {
+        draw_texture_ex(texture,x+(shift as f32 + 1.)*dest_size[0]+dest_size[0]*i as f32,y,WHITE, DrawTextureParams {
+            dest_size: Some(dest_size), source: Some(Rect {x:96.,y:12.,w: 8.,h:16.}), ..Default::default()
+            });
+        }
+    draw_texture_ex(texture,x+(shift as f32 + 1.)*dest_size[0] +dest_size[0]*(inner_length-1) as f32,y,WHITE, DrawTextureParams {
+        dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
+    });
+    draw_texture_ex(texture,x+(shift as f32 + 1.)*dest_size[0]+dest_size[0]*(inner_length) as f32,y,WHITE, DrawTextureParams {
+        dest_size: Some(dest_size), source: Some(Rect {x:96.,y:52.,w: 8.,h:16.}), flip_x: true, ..Default::default()
+    });
+}

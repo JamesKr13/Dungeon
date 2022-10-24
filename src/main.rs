@@ -26,7 +26,7 @@ pub mod traits;
 use crate ::traits::*;
 // use pathfinding::prelude::dijkstra;
 
-fn draw_mobs(mobs: &Vec<Entity>, textures: [[Texture2D;4];4]) {
+fn draw_mobs(mobs: &Vec<Entity>, textures: [[Texture2D;4];4], bar_texture: Texture2D) {
     for mob in mobs{
         let mob_index = match mob.entity_type {
             EntityType::Vampire => 0,
@@ -34,7 +34,7 @@ fn draw_mobs(mobs: &Vec<Entity>, textures: [[Texture2D;4];4]) {
             EntityType::Skelly2 => 2,
             EntityType::Skull => 3,
         };
-        mob.draw_entity(textures[mob_index][mob.frame]);
+        mob.draw_entity(textures[mob_index][mob.frame],bar_texture);
     }
 }
 
@@ -57,7 +57,7 @@ pub fn create_mobs(number: i8,map: &Vec<Vec<AdvanceTileTypes>>) -> Vec<Entity>{
     let mut all_entity = Vec::new();
     for _ in 0..number {
         let spawn = set_spawn(map);
-        all_entity.push(Entity::intialise(100, 100, 100, 100., Coordinates {x:spawn.0,y:spawn.1}));
+        all_entity.push(Entity::intialise(5, 5, 5, 5., Coordinates {x:spawn.0,y:spawn.1}));
     } 
     return all_entity
 }    
@@ -116,6 +116,7 @@ async fn main() {
     for each in player_texutres {
         each.set_filter(FilterMode::Nearest);
     }
+    let start_screen = Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_2.png"), Some(ImageFormat::Png)));
     let selection_hand: [Texture2D;4] = [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_1.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_2.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_3.png"), Some(ImageFormat::Png))),
@@ -192,7 +193,7 @@ async fn main() {
         //Player Movement
         if matches!(current_state,States::Play) {
             map2.draw_map(texture);
-            draw_mobs(&mobs,mob_textures);
+            draw_mobs(&mobs,mob_textures,hud);
             draw_rectangle_lines(abs(x) as f32 *CELL_SIZE,abs(y) as f32 * CELL_SIZE,CELL_SIZE,CELL_SIZE,3.,GOLD);
             if matches!(sub_states[0],States::Play) && matches!(sub_states[1],States::Play) {
                 let mut movement = Movement {
@@ -287,7 +288,7 @@ async fn main() {
             player.storage.display_inventory();
         }
     } 
-    player.health.draw_health(hud,screen_width()/50.,screen_height()/50., vec2(32.,64.));
+    player.health.draw_health(hud,screen_width()/50.,screen_height()/50., vec2(32.,64.),true);
     //Mouse Movement and finding of mouse postion to cell
     y = (((((mouse_position_local()[1] + offset.1)*(screen_height()/screen_width()))/zoom) as i16 | 15)+1)/16 -1;
     x = -((((mouse_position_local()[0] - offset.0)/zoom) as i16 | 15)+1)/16 ;

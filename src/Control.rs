@@ -13,6 +13,8 @@ pub enum States {
     Play,
     OptionInfo,
     Question,
+    Dead,
+    StartScreen,
 }
 // pub struct ManageStates {
 //     pub main_state: States,

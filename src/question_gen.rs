@@ -7,7 +7,7 @@ use super::traits::add_dp_place;
 // macro_rules! format {
 //     ($($arg:tt)*) => { ... };
 // }
-
+use super::player::draw_bar;
 
 #[derive(Default)]
 pub struct Question {
