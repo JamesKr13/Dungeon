@@ -174,9 +174,9 @@ impl BSPTree {
     fn create_hallway(&mut self) {
         let mut linked_rooms: HashMap<(i16,i16),(i16,i16)> = HashMap::new();
         println!("{}",self.leafs.len());
+        let mut closes_room: (i16,i16) = (0,0);
         for room_index in 0..self.leafs.len() {
             let main_room = (self.leafs[room_index].room.x1+(self.leafs[room_index].room.x2)/2,self.leafs[room_index].room.y1+(self.leafs[room_index].room.y2)/2);
-            let mut closes_room: (i16,i16) = (0,0);
             let mut closes_distance: f32= f32::INFINITY;
             for other_room_index in 0..self.leafs.len() {
                 if other_room_index != room_index {
@@ -185,7 +185,7 @@ impl BSPTree {
                 if distance <= closes_distance && main_room !=match linked_rooms.get(&compare_room) {
                         Some(_) => linked_rooms[&compare_room],
                         None => (WORLD_SIZE.0 as i16,WORLD_SIZE.1 as i16),
-                    }{
+                    } {
                     closes_room= compare_room;
                     closes_distance = distance;
                 } 
@@ -203,8 +203,9 @@ impl BSPTree {
     }
     // Problem with gen is in remains here
     fn create_passage(&mut self, point: (i16,i16), second_point: (i16,i16)) {
-        let mut destination_point = *vec!(point.1,second_point.1).iter().min().unwrap();
-        for x_distance in *vec!(point.0,second_point.0).iter().min().unwrap()..=*vec!(point.0,second_point.0).iter().max().unwrap()+2 {
+        println!("linked room", );
+        let mut destination_point = *vec!(point.0,second_point.0).iter().min().unwrap();
+        for x_distance in *vec!(point.1,second_point.1).iter().min().unwrap()..=*vec!(point.1,second_point.1).iter().max().unwrap()+2 {
             self.level[destination_point as usize][x_distance as usize] = TileType::Floor;
             if destination_point >= 1 {
             self.level[(destination_point-1) as usize][x_distance as usize] = TileType::Floor;
@@ -220,10 +221,10 @@ impl BSPTree {
         }
         println!("x point {}", destination_point);
         println!("{}", *vec!(point.0,second_point.0).iter().min().unwrap()-*vec!(point.0,second_point.0).iter().max().unwrap()+2);
-        destination_point = *vec!(point.0,second_point.0).iter().max().unwrap();
+        destination_point = *vec!(point.1,second_point.1).iter().max().unwrap();
         println!("y point {}", destination_point);
         println!("{}", *vec!(point.1,second_point.1).iter().min().unwrap()-vec!(point.1,second_point.1).iter().max().unwrap()+2);
-        for y_distance in *vec!(point.1,second_point.1).iter().min().unwrap()..=*vec!(point.1,second_point.1).iter().max().unwrap()+2 {
+        for y_distance in *vec!(point.0,second_point.0).iter().min().unwrap()..=*vec!(point.0,second_point.0).iter().max().unwrap()+2 {
             self.level[y_distance as usize][destination_point as usize] = TileType::Floor;
             if destination_point <= WORLD_SIZE.0 as i16-1 {
                 self.level[y_distance as usize][(destination_point+1) as usize] = TileType::Floor;
