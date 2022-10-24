@@ -1,4 +1,4 @@
-use super::BSP_tree_map_generation::WORLD_SIZE;
+use super::bsp_tree_map_generation::WORLD_SIZE;
 use super::map::*;
 extern crate rand;
 use rand::Rng;

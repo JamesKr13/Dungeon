@@ -76,9 +76,6 @@ impl Movement {
                 }
     }
 }
-struct Player {
-
-}
 
 pub struct ScreenMovement {
     mouse_position: (f32,f32)

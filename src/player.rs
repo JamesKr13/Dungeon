@@ -5,10 +5,8 @@ use rand::Rng;
 use macroquad::prelude::*;
 use super::map::CELL_SIZE;
 use std::fmt;
-use pathfinding::prelude::astar;
 use macroquad::ui::{hash, root_ui, widgets, Skin,Style};
 use super::map::AdvanceTileTypes;
-use std::collections::HashMap;
 
 const CC_RANGE: f32 = 1.;
 pub fn character(char_type:&Character) -> [String; 4]{
@@ -70,8 +68,8 @@ impl Inventory {
 
 impl Health {
     pub fn adjust(&mut self, increment:i16) -> Option<bool>{
+        self.points += increment;
         if self.points+increment >= 0 {
-            self.points += increment;
             return None;
         }
         return Some(false)
@@ -228,7 +226,7 @@ enum EntityStatus {
 }
 #[derive(Clone)]
 pub struct Entity {
-    health: Health,
+    pub health: Health,
     damage: Damage,
     pub cor: Coordinates<i16>,
     pub entity_type: EntityType,
@@ -299,18 +297,18 @@ impl Entity {
         // As long as there is a move
         if possible_moves.len() != 0 {
             // If player is within detection range e.g. there coordiantes are less then detection range
-            if distance(player.x,player.y,self.cor.x,self.cor.y) <=  30. {
+            if distance(player.x,player.y,self.cor.x,self.cor.y) <=  15. {
                 // creates a vector of the cost for all moves as the distance betweeen two points
                 let cost = possible_moves.iter().map(|x| distance(player.x,player.y,x.0,x.1)).collect::<Vec<f32>>();
                 // creates an iterator object
                 let mut proximity_cost = cost.iter();
                 // If an entity's health drops below a certain value it would attempt to run away
-                if self.health.points <= (self.health.base_health/3){
+                if self.health.points <= (self.health.base_health/5){
                     // find the highest cost value for a move e.g. move which takes them further away from the player
                     let max = proximity_cost.clone().max_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap();
                     // is the max value is greater then a certain value it will adjust health/heal
-                    if *max >= 4. {
-                        self.health.adjust(rng.gen_range(1..=10));
+                    if *max >= 15. {
+                        self.health.adjust(rng.gen_range(0..=1));
                     } else {
                         // if not far enough away from the player entity will decide to run away by picking the max cost move
                         let new_cor = possible_moves[proximity_cost.position(|&x| x == *max).unwrap()];

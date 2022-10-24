@@ -1,6 +1,6 @@
 // use super::BSPMapGeneration::*;
 use super::map::AdvanceTileTypes;
-use super::BSP_tree_map_generation::*;
+use super::bsp_tree_map_generation::*;
 
 const SEARCH: (i16,i16,i16,i16,i16,i16,i16,i16) = (1,2,4,8,16,32,64,128);
 #[derive(Clone)]

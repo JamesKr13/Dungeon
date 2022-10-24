@@ -1,8 +1,7 @@
-use macroquad::ui::{hash, root_ui, widgets, Style};
+
 use macroquad::prelude::*;
 use super::control::*;
 use std::collections::HashMap;
-use regex::Regex;
 use std::fmt;
 use super::player::Coordinates;
 extern crate rand;
@@ -81,7 +80,6 @@ impl CFG {
         let start = rule[random_choice].clone().to_string();
         let mut cont: Vec<String> = start.split_whitespace().map(str::to_string).collect();
         // let mut new_sentence: String = cont.join(" ");
-        let mut continue_loop = true;
         while cont.iter().any(|e| self.rules.contains_key(e)) {
             // println!("call".to_string(), );
             // for i in &cont {
@@ -92,10 +90,6 @@ impl CFG {
                     let options = self.rules.get(&cont[index][..]).unwrap();
                     let random_choice:usize = rng.gen_range(0..options.len());
                     cont[index] = options[random_choice].clone();
-                    continue_loop = true
-
-                } else {
-                    continue_loop = false
                 }
             }
             cont = cont.join(" ").split_whitespace().map(str::to_string).collect();
@@ -105,27 +99,12 @@ impl CFG {
     }
 }
 #[derive(Default,Clone)]
-struct InventorySkins {
-    skins: HashMap<String,Style>
-}
-impl InventorySkins {
-    fn create_inventory_skins(&mut self,items: &Vec<Items>) {
-        for item in items {
-            self.skins.insert(item.to_string(),root_ui()
-                .style_builder().
-                background(Image::from_file_with_format(include_bytes!("../lib/arrow_1.png"),None))
-                .background_margin(RectOffset::new(37.0, 37.0, 5.0, 5.0))
-                .margin(RectOffset::new(10.0, 10.0, 0.0, 0.0)).build());
-                };
-        }
-    }
-#[derive(Default,Clone)]
 pub struct ClickActions {
     pub run_state: bool,
     pub on_set_mouse_position: Coordinates<f32>,
 }
 impl ClickActions {
-    pub fn walk_menu(&mut self, set_pos: bool) {
+    pub fn walk_menu(&mut self, _set_pos: bool) {
         // root_ui().window(hash!(),vec2(pos.x,pos.y),vec2(50.,50.), |ui| {
         //         if (widgets::Button::new("Move Here")
         //         .position(vec2(mouse_position().0,mouse_position().1))
@@ -140,27 +119,28 @@ impl ClickActions {
         // });
         // println!("still fine".to_string(), );
         
-        root_ui().window(hash!("Menu"), vec2(mouse_position().0,mouse_position().1), vec2(65., 40.), |ui| {
-            if widgets::Button::new("Move Here")
-            .position(vec2(0.,0.))
-            .ui(ui) {
-                self.run_state = false;
-                println!("Pushed |.................................................................................................................|", );
-                // self.click_action.run_state = true;
-            }
-            if widgets::Button::new("Take Item")
-            .position(vec2(0.,20.))
-            .ui(ui) {
-                self.run_state = false;
-                println!("Pushed |.................................................................................................................|", );
-                // self.click_action.run_state = true;
-            }
-    });
-    if set_pos {
-        self.on_set_mouse_position = Coordinates {x:mouse_position().0,y:mouse_position().1};
-        root_ui().move_window(hash!("Menu"),vec2(mouse_position().0,mouse_position().1));
-    }
-    }
+    //     root_ui().window(hash!("Menu"), vec2(mouse_position().0,mouse_position().1), vec2(65., 40.), |ui| {
+    //         if widgets::Button::new("Move Here")
+    //         .position(vec2(0.,0.))
+    //         .ui(ui) {
+    //             self.run_state = false;
+    //             println!("Pushed |.................................................................................................................|", );
+    //             // self.click_action.run_state = true;
+    //         }
+    //         if widgets::Button::new("Take Item")
+    //         .position(vec2(0.,20.))
+    //         .ui(ui) {
+    //             self.run_state = false;
+    //             println!("Pushed |.................................................................................................................|", );
+    //             // self.click_action.run_state = true;
+    //         }
+    // });
+    // if set_pos {
+    //     self.on_set_mouse_position = Coordinates {x:mouse_position().0,y:mouse_position().1};
+    //     root_ui().move_window(hash!("Menu"),vec2(mouse_position().0,mouse_position().1));
+    // }
+    // }
+}
 }
 trait DrawText {
     fn draw_text_given_space(&self,x_cor: f32,y_cor: f32, width: f32,height: f32,font_size: f32, sentence: String);
@@ -171,8 +151,8 @@ pub struct Item {
     pub item_type: Items,
 }
 impl DrawText for Item {
-    fn draw_text_given_space(&self,x_cor: f32,y_cor: f32, width: f32,height: f32,font_size: f32, sentence: String) {
-        let mut all_chars: Vec<char>= sentence.chars().collect();
+    fn draw_text_given_space(&self,x_cor: f32,y_cor: f32, width: f32,_height: f32,font_size: f32, sentence: String) {
+        let all_chars: Vec<char>= sentence.chars().collect();
         let dimensions = measure_text(&sentence[..], None, font_size as u16, 1.); 
         let char_number = ((all_chars.len()/(dimensions.width/width).ceil() as usize) as f32).floor() as usize;
         println!("{}", all_chars.len());
@@ -236,7 +216,6 @@ pub struct Storage {
 }
 impl Default for Storage {
     fn default() -> Self {
-        let mut ivsk = InventorySkins::default();
         let all_items = vec!(Item::new(CFG::default().create_sentence("S".to_string())),Item::new(CFG::default().create_sentence("S".to_string())),Item::new(CFG::default().create_sentence("S".to_string())));
         // ivsk.create_inventory_skins(&all_items);
         Self {
@@ -250,7 +229,7 @@ impl Default for Storage {
 }
 impl Storage {
     pub fn display(&mut self) -> Option<Item>{
-            let mut item:Option<Item> = None;
+            let item:Option<Item> = None;
             let window_size = vec2(screen_width()/3., 3.*screen_height()/4.);
             // draw_rectangle(100.,100.,400.,400.,BLUE);
             draw_rectangle(screen_width()-window_size[0],0.,window_size[0],screen_height(),BLACK);

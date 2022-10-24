@@ -9,8 +9,8 @@ pub mod control;
 use crate ::control::*;
 use macroquad::prelude::*;
 pub mod decorate;
-pub mod BSP_tree_map_generation;
-use crate ::BSP_tree_map_generation::*;
+pub mod bsp_tree_map_generation;
+use crate ::bsp_tree_map_generation::*;
 use std::collections::HashMap;
 pub mod interaction;
 use crate ::interaction::*;
@@ -78,15 +78,17 @@ async fn main() {
     let mut x = 0;
     let mut y = 0;
     let mut selected = (0,0);
-    let mut player = PlayerCharacter::intialise(1000,10,10,30.,Coordinates {
+    let mut player = PlayerCharacter::intialise(20,10,10,30.,Coordinates {
         x:current_player.0,
         y:current_player.1
     });
     let mut black_list: Vec<(i16,i16)> = Vec::new();
     let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
-    let mut mobs = create_mobs(15,&map2.tile_placement);
+    let mut mobs = create_mobs(7,&map2.tile_placement);
     let hud = Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/hud-pieces.png"),Some(ImageFormat::Png)));
     hud.set_filter(FilterMode::Nearest);
+    // let menu = Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/cave.png"),Some(ImageFormat::Png)));
+    // menu.set_filter(FilterMode::Nearest);
     let mob_textures: [[Texture2D;4];4] = [[Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_1.png"),Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_2.png"),Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Mob/vampire_v1_3.png"),Some(ImageFormat::Png))),
@@ -115,8 +117,7 @@ async fn main() {
     for each in player_texutres {
         each.set_filter(FilterMode::Nearest);
     }
-    let start_screen = Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_2.png"), Some(ImageFormat::Png)));
-    let selection_hand: [Texture2D;4] = [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_1.png"), Some(ImageFormat::Png))),
+    let _selection_hand: [Texture2D;4] = [Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_1.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_2.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_3.png"), Some(ImageFormat::Png))),
     Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/Priest/priest1_v2_4.png"), Some(ImageFormat::Png)))];
@@ -126,16 +127,9 @@ async fn main() {
     let mut period = SystemTime::now();
     let mut question = Question::default();
     question.create("eigen value");
-    let mut countdown = CountDown::new_countdown(100);
     let cfg = CFG::default();
     let mut mob_shift_count = 0;
-    loop {
-        let mut click = ClickActions {
-            run_state: false,
-            on_set_mouse_position: Coordinates {x:0.,y:0.}
-        };
-
-        
+    loop {        
         if !matches!(current_state,States::Menu) {
             
             
@@ -160,9 +154,6 @@ async fn main() {
                     current_state = state;
                 }
             }
-        if is_key_pressed(KeyCode::A) {
-            println!("{:#?}",current_state)
-        }
         
 
         //Main loop
@@ -177,7 +168,7 @@ async fn main() {
                     for mob_index in 0..mobs.len() {
                         let exculde_self:  Vec<Coordinates<i16>> = mobs.clone().into_iter().map(|mob| mob.cor).collect();
                         if !mobs[mob_index].consider_action(&map2.tile_placement,player.cor,&exculde_self).is_none(){
-                            let life_state = player.health.adjust(-1);
+                            let life_state = player.health.adjust(0);
                             if !life_state.is_none() {
                                 current_state = States::Menu;
                             }
@@ -233,8 +224,8 @@ async fn main() {
             AdvanceTileTypes::Chest => 0,
             _ => 2
         };
-        let sub_state_one = sub_states[1];
-        if !matches!(States::Question, sub_state_one) {
+        let _sub_state_one = sub_states[1];
+        if !matches!(States::Question, _sub_state_one) {
             question.user_answer = ask_question(&question,&question.user_answer);
             println!("{}", question.user_answer);
             if is_key_released(KeyCode::Backspace) {
@@ -282,13 +273,20 @@ async fn main() {
         if matches!(sub_states[1],States::Inventory) {
             player.storage.display_inventory();
         }
-        player.health.draw_health(hud,screen_width()/50.,screen_height()/50., vec2(32.,64.),true);
+        player.health.draw_health(hud,screen_width()/50.,screen_height()/50., vec2(20.,40.),true);
     //Mouse Movement and finding of mouse postion to cell
     y = (((((mouse_position_local()[1] + offset.1)*(screen_height()/screen_width()))/zoom) as i16 | 15)+1)/16 -1;
     x = -((((mouse_position_local()[0] - offset.0)/zoom) as i16 | 15)+1)/16 ;
     player.cor.x = current_player.0;
     player.cor.y = current_player.1;
     if is_mouse_button_down(MouseButton::Left) {
+        let position_of_mob = mobs.iter().position(|mob| mob.cor.x == x && mob.cor.y == y);
+        if !position_of_mob.is_none() {
+            // As question Function goes in here
+            if !mobs[position_of_mob.unwrap()].health.adjust(-1).is_none() {
+                mobs.remove(position_of_mob.unwrap());
+            }
+        }
         if match  map2.tile_placement[abs(y) as usize][abs(x) as usize] {
             AdvanceTileTypes::Void => true,
             _ => true,
@@ -307,9 +305,12 @@ async fn main() {
         }
     }
     } else {
-        println!("Menu", );
+        // draw_texture_ex(menu,0.,0.,WHITE, DrawTextureParams {
+        //     dest_size: Some(vec2(screen_width(),screen_height())),
+        //     ..Default::default()
+        // })
+        
     }
-    
         
         next_frame().await
         }

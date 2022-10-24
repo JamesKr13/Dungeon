@@ -1,6 +1,6 @@
 use super::bit_masking::*;
 // use super::BSPMapGeneration::*;
-use super::BSP_tree_map_generation::{WORLD_SIZE,TileType};
+use super::bsp_tree_map_generation::{WORLD_SIZE,TileType};
 pub const CELL_SIZE: f32 = 16.;
 extern crate rand;
 use rand::Rng;

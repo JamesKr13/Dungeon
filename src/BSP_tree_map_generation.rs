@@ -99,7 +99,6 @@ pub struct BSPTree {
 }
 impl Default for BSPTree {
     fn default() -> Self {
-        println!("BSPTree Default", );
         Self {
             leafs: Vec::new(), root: new_leaf(0,0,WORLD_SIZE.0 as i16,WORLD_SIZE.1 as i16), level: vec![vec![TileType::Wall; WORLD_SIZE.0]; WORLD_SIZE.1], x: Vec::new()
         }
@@ -107,7 +106,6 @@ impl Default for BSPTree {
 }
 impl BSPTree {
     pub fn generate_level(&mut self) {
-        println!("Level Generated", );
         self.root = Leaf {
             x: 0,
             y: 0,
@@ -120,7 +118,7 @@ impl BSPTree {
         while split {
             split = false;
             for index in 0..self.leafs.len() {
-                let mut old_len = self.leafs.len();
+                let old_len = self.leafs.len();
                 let mut l = self.leafs[index].clone();
                 if l.width > MIN_LEAF_SIZE || l.height > MIN_LEAF_SIZE {
                     let x = l.split();
@@ -138,28 +136,8 @@ impl BSPTree {
                 }
                 }
                 }
-            println!("this many rooms {}", self.leafs.len());
             self.create_binary_map();
-            for line in self.level.iter() {
-                for tile in line {
-                    print!("{}", match tile {
-                        TileType::Floor => 0,
-                        TileType::Wall => 1,
-                    });
-                }
-                print!("\n");
-            }
-            println!("this many rooms 2 {}", self.leafs.len());
             self.create_hallway();
-            for line in self.level.iter() {
-                for tile in line {
-                    print!("{}", match tile {
-                        TileType::Floor => 0,
-                        TileType::Wall => 1,
-                    });
-                }
-                print!("\n");
-            }
             }
     fn create_binary_map(&mut self) {
         for leaf in &self.leafs {
@@ -173,7 +151,6 @@ impl BSPTree {
     }
     fn create_hallway(&mut self) {
         let mut linked_rooms: HashMap<(i16,i16),(i16,i16)> = HashMap::new();
-        println!("{}",self.leafs.len());
         let mut closes_room: (i16,i16) = (0,0);
         for room_index in 0..self.leafs.len() {
             let main_room = (self.leafs[room_index].room.x1+(self.leafs[room_index].room.x2)/2,self.leafs[room_index].room.y1+(self.leafs[room_index].room.y2)/2);
@@ -193,17 +170,10 @@ impl BSPTree {
         }
         linked_rooms.insert(main_room,closes_room);
         self.create_passage(main_room,closes_room);
-        println!("{},{} goes to {},{}",main_room.0,main_room.1,closes_room.0,closes_room.1 );
-        }  
-        println!("rooms linked {:#?}", linked_rooms.len());
-        // println!("map = {}", self.x.len());
-        // for i in 0..self.x.len() {
-        //     self.create_passage(self.x[i][0],self.x[i][1]);
-        // }
+        }
     }
     // Problem with gen is in remains here
     fn create_passage(&mut self, point: (i16,i16), second_point: (i16,i16)) {
-        println!("linked room", );
         let mut destination_point = *vec!(point.0,second_point.0).iter().min().unwrap();
         for x_distance in *vec!(point.1,second_point.1).iter().min().unwrap()..=*vec!(point.1,second_point.1).iter().max().unwrap()+2 {
             self.level[destination_point as usize][x_distance as usize] = TileType::Floor;
@@ -219,11 +189,7 @@ impl BSPTree {
                 self.level[(destination_point+2) as usize][x_distance as usize] = TileType::Floor;
             }
         }
-        println!("x point {}", destination_point);
-        println!("{}", *vec!(point.0,second_point.0).iter().min().unwrap()-*vec!(point.0,second_point.0).iter().max().unwrap()+2);
         destination_point = *vec!(point.1,second_point.1).iter().max().unwrap();
-        println!("y point {}", destination_point);
-        println!("{}", *vec!(point.1,second_point.1).iter().min().unwrap()-vec!(point.1,second_point.1).iter().max().unwrap()+2);
         for y_distance in *vec!(point.0,second_point.0).iter().min().unwrap()..=*vec!(point.0,second_point.0).iter().max().unwrap()+2 {
             self.level[y_distance as usize][destination_point as usize] = TileType::Floor;
             if destination_point <= WORLD_SIZE.0 as i16-1 {
