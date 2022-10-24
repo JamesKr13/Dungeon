@@ -232,6 +232,7 @@ pub struct Entity {
     pub entity_type: EntityType,
     entity_status: EntityStatus,
     pub frame: usize,
+    heal_percent: f32,
 
 }
 impl Entity {
@@ -256,6 +257,7 @@ impl Entity {
             entity_type: e_type,
             entity_status: e_status,
             frame: 0,
+            heal_percent: 5.,
         }
     }
     fn _attack(&self, target_pos: Coordinates<i16>) -> Option<i16> {
@@ -297,28 +299,30 @@ impl Entity {
         // As long as there is a move
         if possible_moves.len() != 0 {
             // If player is within detection range e.g. there coordiantes are less then detection range
-            if distance(player.x,player.y,self.cor.x,self.cor.y) <=  15. {
+            if distance(player.x,player.y,self.cor.x,self.cor.y) <=  10. {
                 // creates a vector of the cost for all moves as the distance betweeen two points
                 let cost = possible_moves.iter().map(|x| distance(player.x,player.y,x.0,x.1)).collect::<Vec<f32>>();
                 // creates an iterator object
                 let mut proximity_cost = cost.iter();
                 // If an entity's health drops below a certain value it would attempt to run away
-                if self.health.points <= (self.health.base_health/5){
+                if self.health.points <= (self.health.base_health as f32*self.heal_percent) as i16{
                     // find the highest cost value for a move e.g. move which takes them further away from the player
                     let max = proximity_cost.clone().max_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap();
                     // is the max value is greater then a certain value it will adjust health/heal
-                    if *max >= 15. {
+                    if *max >= 10. {
                         self.health.adjust(rng.gen_range(0..=1));
+                        self.heal_percent = 0.7;
                     } else {
                         // if not far enough away from the player entity will decide to run away by picking the max cost move
                         let new_cor = possible_moves[proximity_cost.position(|&x| x == *max).unwrap()];
                         self.cor = Coordinates {x:new_cor.0,y:new_cor.1};
                     }
                 } else {
+                    self.heal_percent = 0.5;
                     // Find the smallest cost, which brings it closer to the player
                     let min = proximity_cost.clone().min_by(|x, y| x.partial_cmp(&y).unwrap()).unwrap();
                     //if the smallest value is within close combat range the function will return a damage value
-                    if min <= &CC_RANGE {
+                    if min <= &0. {
                         return Some(self.damage.deal(Some(1)));
                         
                     }
