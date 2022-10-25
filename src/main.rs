@@ -103,7 +103,7 @@ async fn main() {
     );
     let mut black_list: Vec<(i16, i16)> = Vec::new();
     let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
-    let mut mobs = create_mobs(7, &map2.tile_placement);
+    let mut mobs = create_mobs(12, &map2.tile_placement);
     let hud = Texture2D::from_image(&Image::from_file_with_format(
         include_bytes!("../lib/hud-pieces.png"),
         Some(ImageFormat::Png),
@@ -233,6 +233,7 @@ async fn main() {
         each.set_filter(FilterMode::Nearest);
     }
     let mut period = SystemTime::now();
+    let mut movement_period = SystemTime::now();
     let mut question = Question::default();
     question.create("eigen value");
     let cfg = CFG::default();
@@ -263,7 +264,7 @@ async fn main() {
 
             //Main loop
             if matches!(current_state, States::Play) {
-                if 0.5 < (period.elapsed().unwrap().subsec_nanos() as f32 / 100_000_000.) {
+                if 1. < (period.elapsed().unwrap().subsec_nanos() as f32 / 100_000_000.) {
                     player.update_player_frame();
                     mob_shift_count += 1;
                     for mob in &mut mobs {
@@ -298,18 +299,15 @@ async fn main() {
                     3.,
                     GOLD,
                 );
-                if matches!(sub_states[0], States::Play) && matches!(sub_states[1], States::Play) {
+                if matches!(sub_states[0], States::Play) && matches!(sub_states[1], States::Play) && 1. < (movement_period.elapsed().unwrap().subsec_nanos() as f32 / 100_000_000.){
+                    movement_period = SystemTime::now();
                     let mut movement = Movement {
-                        up: is_key_pressed(KeyCode::W) || is_key_pressed(KeyCode::Up),
-                        down: is_key_pressed(KeyCode::S) || is_key_pressed(KeyCode::Down),
-                        left: is_key_pressed(KeyCode::A) || is_key_pressed(KeyCode::Left),
-                        right: is_key_pressed(KeyCode::D) || is_key_pressed(KeyCode::Right),
+                        up: is_key_down(KeyCode::W) || is_key_down(KeyCode::Up),
+                        down: is_key_down(KeyCode::S) || is_key_down(KeyCode::Down),
+                        left: is_key_down(KeyCode::A) || is_key_down(KeyCode::Left),
+                        right: is_key_down(KeyCode::D) || is_key_down(KeyCode::Right),
                     };
                     let shift = movement.vector_movement();
-                    let screen_shift = ScreenMovement::default();
-                    let screen_shift = screen_shift.mouse_follow();
-                    offset.0 += (screen_shift.0) * zoom;
-                    offset.1 += (screen_shift.1) * zoom;
                     if (shift.0 != 0 || shift.1 != 0)
                         && movement.movement_character(
                             &map2.tile_placement,
@@ -326,6 +324,10 @@ async fn main() {
                             / screen_height();
                     }
                 }
+                let screen_shift = ScreenMovement::default();
+                let screen_shift = screen_shift.mouse_follow();
+                offset.0 += (screen_shift.0) * zoom;
+                offset.1 += (screen_shift.1) * zoom;
                 // draw_rectangle(current_player.0 as f32 *CELL_SIZE,current_player.1 as f32 *CELL_SIZE,CELL_SIZE,CELL_SIZE,RED);
                 player.draw_player(player_texutres[player.frame as usize]);
                 if !&found_path.is_none() {
@@ -417,6 +419,7 @@ async fn main() {
                 if is_mouse_button_down(MouseButton::Left) {
                     let position_of_mob =
                         mobs.iter().position(|mob| mob.cor.x == x && mob.cor.y == y);
+                    
                     if position_of_mob.is_some() {
                         // As question Function goes in here
                         if mobs[position_of_mob.unwrap()].health.adjust(-1).is_some() {

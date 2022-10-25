@@ -4,9 +4,6 @@ use ::rand::Rng;
 use macroquad::prelude::*;
 use std::format;
 use std::time::SystemTime;
-// macro_rules! format {
-//     ($($arg:tt)*) => { ... };
-// }
 
 #[derive(Default)]
 pub struct Question {
@@ -28,10 +25,6 @@ impl Question {
             }
             _ => None,
         };
-        //     if !question.is_none(){
-        //     self.answer = question.unwrap().answer;
-        //     self.question = question.unwrap().question;
-        // }
     }
     fn check_answer(&self) -> bool {
         let mut answer: Vec<&str> = self.answer.split(',').collect();

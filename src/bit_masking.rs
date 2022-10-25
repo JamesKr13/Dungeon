@@ -1,4 +1,3 @@
-// use super::BSPMapGeneration::*;
 use super::bsp_tree_map_generation::{BSPTree, TileType, WORLD_SIZE};
 use super::map::AdvanceTileTypes;
 
@@ -104,20 +103,20 @@ impl BitMaskMap {
             111 => AdvanceTileTypes::REdge,
             118 => AdvanceTileTypes::LEdge,
             120 => AdvanceTileTypes::REdge,
-            122 => AdvanceTileTypes::GenericFloor, //?
+            122 => AdvanceTileTypes::GenericFloor,
             123 => AdvanceTileTypes::GenericFloor,
             124 => AdvanceTileTypes::REdge,
             126 => AdvanceTileTypes::BLCorner,
             127 => AdvanceTileTypes::OTRCorner,
             143 => AdvanceTileTypes::BRCorner,
             145 => AdvanceTileTypes::TLCorner,
-            150 => AdvanceTileTypes::BLCorner, //Ledge
+            150 => AdvanceTileTypes::BLCorner,
             151 => AdvanceTileTypes::BLCorner,
-            159 => AdvanceTileTypes::BEdge, //is a corner
+            159 => AdvanceTileTypes::BEdge,
             191 => AdvanceTileTypes::BEdge,
             201 => AdvanceTileTypes::LEdge,
             203 => AdvanceTileTypes::BRCorner,
-            208 => AdvanceTileTypes::TLCorner, // T l Outside corner
+            208 => AdvanceTileTypes::TLCorner,
             210 => AdvanceTileTypes::REdge,
             211 => AdvanceTileTypes::LEdge,
             214 => AdvanceTileTypes::LEdge,
@@ -127,7 +126,7 @@ impl BitMaskMap {
             218 => AdvanceTileTypes::TEdge,
             219 => AdvanceTileTypes::TEdge,
             222 => AdvanceTileTypes::TEdge,
-            223 => AdvanceTileTypes::OTLCorner, //Corner Piece
+            223 => AdvanceTileTypes::OTLCorner,
             232 => AdvanceTileTypes::REdge,
             233 => AdvanceTileTypes::REdge,
             235 => AdvanceTileTypes::REdge,

@@ -1,16 +1,10 @@
 use super::bit_masking::BitMaskMap;
-// use super::BSPMapGeneration::*;
 use super::bsp_tree_map_generation::{TileType, WORLD_SIZE};
 pub const CELL_SIZE: f32 = 16.;
 extern crate rand;
 use macroquad::prelude::*;
 use rand::Rng;
-// use super::Control::*;
 use std::fmt;
-// use std::{
-//     cmp::max,
-//     collections::{HashSet, VecDeque},
-// };
 
 const NUMBER_OF_DECORATIONS: i16 = 7;
 const FLOORCOOR: [(i16, i16); 12] = [
@@ -83,7 +77,6 @@ impl Default for MapLayout {
             exit: map.exit,
             other_map: map.map,
             tile_placement: map.tile_map,
-            // x: map.x
         }
     }
 }
@@ -182,34 +175,6 @@ impl MapLayout {
             _ => AdvanceTileTypes::GenericFloor,
         }
     }
-    // pub fn get_path(&self, start_node: (usize,usize), end_node: (usize,usize)) -> Vec<(usize,usize)> {
-    // // Open source code, written by Benjy under the MIT license.
-    // let mut parents: Vec<Option<(usize,usize)>> = vec![None; WORLD_SIZE.0];
-    // let mut nodes_to_visit: VecDeque<((usize,usize), (usize,usize))> = VecDeque::new();
-    // nodes_to_visit.push_back((start_node, start_node));
-    // let mut visited_nodes: Vec<bool> = vec![false; self.node.len()];
-    // while let Some((parent, node)) = nodes_to_visit.pop_front() {
-    //     visited_nodes[node] = true;
-    //     parents[node] = Some(parent);
-    //     if node == end_node {
-    //         break;
-    //     }
-    //     for neighbor: (usize,usize) in vec![(node.0,node.1+1),(node.0,node.1-1),(node.0+1,node.1),(node.0-1,node.1)] {
-    //         if !visited_nodes[*neighbor] {
-    //             nodes_to_visit.push_back((node, *neighbor));
-    //         }
-    //     }
-    // }
-    // let mut path: Vec<(usize,usize)> = Vec::new();
-    // let mut current_node = end_node;
-    // loop {
-    //     path.push(current_node);
-    //     if current_node == start_node {
-    //         break;
-    //     }
-    //     current_node = parents[current_node].unwrap();
-    // }
-    // path
 }
 pub fn _draw_tile(row: usize, column: usize, texture: Texture2D, pos: (i16, i16)) {
     draw_texture_ex(
