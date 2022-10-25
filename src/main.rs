@@ -101,6 +101,7 @@ async fn main() {
             y: current_player.1,
         },
     );
+    let mut position_of_mob: Option<usize> = None;
     let mut black_list: Vec<(i16, i16)> = Vec::new();
     let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
     let mut mobs = create_mobs(12, &map2.tile_placement);
@@ -111,6 +112,7 @@ async fn main() {
     hud.set_filter(FilterMode::Nearest);
     // let menu = Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/cave.png"),Some(ImageFormat::Png)));
     // menu.set_filter(FilterMode::Nearest);
+    let mut user_answer = String::new();
     let mob_textures: [[Texture2D; 4]; 4] = [
         [
             Texture2D::from_image(&Image::from_file_with_format(
@@ -264,6 +266,10 @@ async fn main() {
 
             //Main loop
             if matches!(current_state, States::Play) {
+                map2.draw_map(texture);
+                draw_mobs(&mobs, mob_textures, hud);
+                player.draw_player(player_texutres[player.frame as usize]);
+                if matches!(sub_states[1],States::Play) {
                 if 1. < (period.elapsed().unwrap().subsec_nanos() as f32 / 100_000_000.) {
                     player.update_player_frame();
                     mob_shift_count += 1;
@@ -289,8 +295,7 @@ async fn main() {
                     }
                     period = SystemTime::now();
                 }
-                map2.draw_map(texture);
-                draw_mobs(&mobs, mob_textures, hud);
+                
                 draw_rectangle_lines(
                     f32::from(abs(x)) * CELL_SIZE,
                     f32::from(abs(y)) * CELL_SIZE,
@@ -329,7 +334,7 @@ async fn main() {
                 offset.0 += (screen_shift.0) * zoom;
                 offset.1 += (screen_shift.1) * zoom;
                 // draw_rectangle(current_player.0 as f32 *CELL_SIZE,current_player.1 as f32 *CELL_SIZE,CELL_SIZE,CELL_SIZE,RED);
-                player.draw_player(player_texutres[player.frame as usize]);
+               
                 if !&found_path.is_none() {
                     for tile_move in &found_path.clone().unwrap().0 {
                         draw_rectangle(
@@ -341,7 +346,13 @@ async fn main() {
                         );
                     }
                 }
-
+                if is_key_pressed(KeyCode::I) {
+                    sub_states[1] = match sub_states[1] {
+                        States::Inventory => States::Play,
+                        _ => States::Inventory,
+                    }
+                }
+            }
                 set_default_camera();
 
                 let store_check = match map2.tile_placement[current_player.1 as usize]
@@ -351,18 +362,7 @@ async fn main() {
                     AdvanceTileTypes::Chest => 0,
                     _ => 2,
                 };
-                let _sub_state_one = sub_states[1];
-                if !matches!(States::Question, _sub_state_one) {
-                    question.user_answer = ask_question(&question, &question.user_answer);
-                    println!("{}", question.user_answer);
-                    if is_key_released(KeyCode::Backspace) {
-                        question.user_answer = question.user_answer.remove_last();
-                    }
-                }
-
-                if question.user_answer.eq("true") {
-                    println!("correct",);
-                }
+                
                 //load store for player: store is any storage
                 if store_check != 2 {
                     all_storage
@@ -378,7 +378,6 @@ async fn main() {
                     if matches!(sub_states[0], States::Storage)
                         && !black_list.iter().any(|&i| i == current_player)
                     {
-                        println!("{}", &all_storage[&current_player].used);
                         let pull_item = all_storage[&current_player].clone().display();
                         if pull_item.is_some() {
                             player.storage.storage.push(pull_item.unwrap());
@@ -388,12 +387,7 @@ async fn main() {
                     }
                 }
                 // match states of inventory
-                if is_key_pressed(KeyCode::I) {
-                    sub_states[1] = match sub_states[1] {
-                        States::Inventory => States::Play,
-                        _ => States::Inventory,
-                    }
-                }
+                
                 // display inventory
                 if matches!(sub_states[1], States::Inventory) {
                     player.storage.display_inventory();
@@ -416,16 +410,10 @@ async fn main() {
                 x = -((((mouse_position_local()[0] - offset.0) / zoom) as i16 | 15) + 1) / 16;
                 player.cor.x = current_player.0;
                 player.cor.y = current_player.1;
-                if is_mouse_button_down(MouseButton::Left) {
-                    let position_of_mob =
+                if is_mouse_button_down(MouseButton::Left){
+                    position_of_mob =
                         mobs.iter().position(|mob| mob.cor.x == x && mob.cor.y == y);
                     
-                    if position_of_mob.is_some() {
-                        // As question Function goes in here
-                        if mobs[position_of_mob.unwrap()].health.adjust(-1).is_some() {
-                            mobs.remove(position_of_mob.unwrap());
-                        }
-                    }
                     if match map2.tile_placement[abs(y) as usize][abs(x) as usize] {
                         AdvanceTileTypes::Void => true,
                         _ => true,
@@ -434,6 +422,26 @@ async fn main() {
                         selected = (x, y)
                     }
                 }
+                if position_of_mob.is_some() || matches!(sub_states[1],States::Question){
+                    sub_states[1] = States::Question;
+                    println!("{} = {}", question.user_answer,question.user_answer.eq("true"));
+                    if question.user_answer.eq("true") {
+                        if mobs[position_of_mob.unwrap()].health.adjust(player.damage.deal(None)).is_some() {
+                            mobs.remove(position_of_mob.unwrap());
+                        }
+                        question.create("eigen value");
+                            sub_states[1] = States::Play;
+                            position_of_mob = None;
+                    }
+                }
+                let _sub_state_one = sub_states[1];
+                if matches!(_sub_state_one,States::Question) {
+                    println!("{}", question.user_answer);
+                    question.user_answer = ask_question(&question, &question.user_answer);
+                    if is_key_released(KeyCode::Backspace) {
+                        question.user_answer = question.user_answer.remove_last();
+                    }
+            }
                 if selected != (x, y) {
                     sub_states[2] = States::Play;
                 }
