@@ -434,7 +434,8 @@ impl Entity {
                         .unwrap();
                     // is the max value is greater then a certain value it will adjust health/heal
                     if *max >= 10. {
-                        self.health.adjust(rng.gen_range(0..=1));
+                        let chance = rng.gen_range(0..=1);
+                        self.health.adjust(1*i16::from(chance <= 3));
                         self.heal_percent = 0.7;
                     } else {
                         // if not far enough away from the player entity will decide to run away by picking the max cost move

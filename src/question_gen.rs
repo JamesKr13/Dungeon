@@ -14,6 +14,7 @@ pub struct Question {
 }
 impl Question {
     pub fn create(&mut self, q_type: &str) {
+        self.user_answer = String::new();
         match q_type {
             "eigen value" => {
                 self.eigen_values_simple();

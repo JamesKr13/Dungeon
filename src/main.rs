@@ -416,9 +416,10 @@ async fn main() {
                 player.cor.x = current_player.0;
                 player.cor.y = current_player.1;
                 if is_mouse_button_down(MouseButton::Left){
+                    if position_of_mob.is_none() {
                     position_of_mob =
                         mobs.iter().position(|mob| mob.cor.x == x && mob.cor.y == y);
-                    
+                    }
                     if match map2.tile_placement[abs(y) as usize][abs(x) as usize] {
                         AdvanceTileTypes::Void => true,
                         _ => true,
@@ -438,6 +439,13 @@ async fn main() {
                         sub_states[1] = States::Play;
                         position_of_mob = None;
                         question.user_answer = String::new();
+                    }
+                    if question.user_answer.eq("false") {
+                        question.create("eigen value");
+                        sub_states[1] = States::Play;
+                        position_of_mob = None;
+                        question.user_answer = String::new();
+
                     }
                 }
                 let _sub_state_one = sub_states[1];
