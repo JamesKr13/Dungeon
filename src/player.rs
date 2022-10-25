@@ -159,24 +159,6 @@ impl Health {
             shift = 4
         }
         draw_bar(x, y, texture, dest_size, self.base_health as usize, shift);
-        // draw_texture_ex(texture,x,y,WHITE, DrawTextureParams {
-        //     dest_size: Some(dest_size), source: Some(Rect {x:96.,y:52.,w: 8.,h:16.}), ..Default::default()
-        // });
-        // draw_texture_ex(texture,x+dest_size[0],y,WHITE, DrawTextureParams {
-        //     dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
-        // });
-        // draw_texture_ex(texture,x+2.*dest_size[0],y,WHITE, DrawTextureParams {
-        //     dest_size: Some(vec2(dest_size[0]*2.,dest_size[1])), source: Some(Rect {x:60.,y:44.,w: 16.,h:16.}), ..Default::default()
-        // });
-        // draw_texture_ex(texture,x+4.*dest_size[0],y,WHITE, DrawTextureParams {
-        //     dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
-        // });
-        // for i in 0..self.base_health {
-        // draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*i as f32,y,WHITE, DrawTextureParams {
-        //     dest_size: Some(dest_size), source: Some(Rect {x:96.,y:12.,w: 8.,h:16.}), ..Default::default()
-        //     });
-        // }
-
         for i in 0..self.points - 1 {
             draw_texture_ex(
                 texture,
@@ -232,12 +214,6 @@ impl Health {
                 },
             );
         }
-        // draw_texture_ex(texture,x+5.*dest_size[0] +dest_size[0]*(self.base_health-1) as f32,y,WHITE, DrawTextureParams {
-        //     dest_size: Some(dest_size), source: Some(Rect {x:104.,y:52.,w: 8.,h:16.}), ..Default::default()
-        // });
-        // draw_texture_ex(texture,x+5.*dest_size[0]+dest_size[0]*(self.base_health) as f32,y,WHITE, DrawTextureParams {
-        //     dest_size: Some(dest_size), source: Some(Rect {x:96.,y:52.,w: 8.,h:16.}), flip_x: true, ..Default::default()
-        // });
     }
 }
 #[derive(Clone)]

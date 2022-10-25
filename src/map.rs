@@ -5,6 +5,7 @@ extern crate rand;
 use macroquad::prelude::*;
 use rand::Rng;
 use std::fmt;
+use enum_assoc::Assoc;
 
 const NUMBER_OF_DECORATIONS: i16 = 7;
 const FLOORCOOR: [(i16, i16); 12] = [
@@ -66,6 +67,7 @@ pub struct MapLayout {
     exit: (i32, i32),
     pub other_map: Vec<Vec<TileType>>,
     pub tile_placement: Vec<Vec<AdvanceTileTypes>>,
+    frame: usize,
     // x: Vec<[(i16,i16);2]>
 }
 
@@ -77,11 +79,21 @@ impl Default for MapLayout {
             exit: map.exit,
             other_map: map.map,
             tile_placement: map.tile_map,
+            frame: 0,
         }
     }
 }
 impl MapLayout {
-    pub fn draw_map(&mut self, texture: Texture2D) {
+    pub fn frame_up(&mut self) {
+        self.frame = match self.frame {
+            0 => 1,
+            1 => 2,
+            2 => 3,
+            3 => 0,
+            _ => 1,
+        };
+    }
+    pub fn draw_map(&mut self, texture: Texture2D,torch_texture:[Texture2D;4]) {
         for row in 0..WORLD_SIZE.1 {
             for column in 0..WORLD_SIZE.0 {
                 match &self.tile_placement[row][column] {
@@ -103,13 +115,7 @@ impl MapLayout {
                     AdvanceTileTypes::SmallCHest => draw_decor(row, column, texture, (1, 8)),
                     AdvanceTileTypes::Bones => draw_decor(row, column, texture, (8, 6)),
                     AdvanceTileTypes::Skull => draw_decor(row, column, texture, (7, 7)),
-                    AdvanceTileTypes::CandleStick => draw_rectangle(
-                        (column as f32) * CELL_SIZE,
-                        (row as f32) * CELL_SIZE,
-                        CELL_SIZE,
-                        CELL_SIZE,
-                        ORANGE,
-                    ),
+                    AdvanceTileTypes::CandleStick => draw_animated_decor(row, column, texture,torch_texture[self.frame]),
                     AdvanceTileTypes::Rock => draw_decor(row, column, texture, (9, 4)),
                     AdvanceTileTypes::SmallRock => draw_decor(row, column, texture, (9, 5)),
                 };
@@ -204,6 +210,24 @@ pub fn draw_decor(row: usize, column: usize, texture: Texture2D, pos: (i16, i16)
             source: Some(Rect {
                 x: f32::from(pos.0) * CELL_SIZE,
                 y: f32::from(pos.1) * CELL_SIZE,
+                w: CELL_SIZE,
+                h: CELL_SIZE,
+            }),
+            ..Default::default()
+        },
+    );
+}
+pub fn draw_animated_decor(row: usize, column: usize, floor_texture:Texture2D, texture: Texture2D) {
+    _draw_floor(row, column, floor_texture);
+    draw_texture_ex(
+        texture,
+        column as f32 * CELL_SIZE,
+        row as f32 * CELL_SIZE,
+        WHITE,
+        DrawTextureParams {
+            source: Some(Rect {
+                x: 0.,
+                y: 0.,
                 w: CELL_SIZE,
                 h: CELL_SIZE,
             }),

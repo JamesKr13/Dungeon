@@ -8,7 +8,6 @@ pub mod control;
 use crate::control::{Movement, ScreenMovement, States};
 use macroquad::prelude::*;
 pub mod bsp_tree_map_generation;
-pub mod decorate;
 use crate::bsp_tree_map_generation::{abs, WORLD_SIZE};
 use std::collections::HashMap;
 pub mod interaction;
@@ -93,8 +92,8 @@ async fn main() {
     let mut selected = (0, 0);
     let mut player = PlayerCharacter::intialise(
         20,
-        10,
-        10,
+        -1,
+        -1,
         30.,
         Coordinates {
             x: current_player.0,
@@ -213,25 +212,28 @@ async fn main() {
     for each in player_texutres {
         each.set_filter(FilterMode::Nearest);
     }
-    let _selection_hand: [Texture2D; 4] = [
+    let torch_texture: [Texture2D; 4] = [
         Texture2D::from_image(&Image::from_file_with_format(
-            include_bytes!("../lib/Priest/priest1_v2_1.png"),
+            include_bytes!("../lib/torch/candlestick_1_1.png"),
             Some(ImageFormat::Png),
         )),
         Texture2D::from_image(&Image::from_file_with_format(
-            include_bytes!("../lib/Priest/priest1_v2_2.png"),
+            include_bytes!("../lib/torch/candlestick_1_2.png"),
             Some(ImageFormat::Png),
         )),
         Texture2D::from_image(&Image::from_file_with_format(
-            include_bytes!("../lib/Priest/priest1_v2_3.png"),
+            include_bytes!("../lib/torch/candlestick_1_3.png"),
             Some(ImageFormat::Png),
         )),
         Texture2D::from_image(&Image::from_file_with_format(
-            include_bytes!("../lib/Priest/priest1_v2_4.png"),
+            include_bytes!("../lib/torch/candlestick_1_4.png"),
             Some(ImageFormat::Png),
         )),
     ];
     for each in player_texutres {
+        each.set_filter(FilterMode::Nearest);
+    }
+    for each in torch_texture {
         each.set_filter(FilterMode::Nearest);
     }
     let mut period = SystemTime::now();
@@ -266,7 +268,7 @@ async fn main() {
 
             //Main loop
             if matches!(current_state, States::Play) {
-                map2.draw_map(texture);
+                map2.draw_map(texture,torch_texture);
                 draw_mobs(&mobs, mob_textures, hud);
                 player.draw_player(player_texutres[player.frame as usize]);
                 if matches!(sub_states[1],States::Play) {
@@ -277,14 +279,17 @@ async fn main() {
                         mob._update_entity_frame()
                     }
                     if mob_shift_count == 4 {
+                        map2.frame_up();
                         for mob_index in 0..mobs.len() {
                             let exculde_self: Vec<Coordinates<i16>> =
                                 mobs.clone().into_iter().map(|mob| mob.cor).collect();
+                                
                             if mobs[mob_index]
                                 .consider_action(&map2.tile_placement, player.cor, &exculde_self)
                                 .is_some()
                             {
                                 let life_state = player.health.adjust(-1);
+                                
                                 if life_state.is_some() {
                                     current_state = States::Menu;
                                 }
@@ -430,8 +435,9 @@ async fn main() {
                             mobs.remove(position_of_mob.unwrap());
                         }
                         question.create("eigen value");
-                            sub_states[1] = States::Play;
-                            position_of_mob = None;
+                        sub_states[1] = States::Play;
+                        position_of_mob = None;
+                        question.user_answer = String::new();
                     }
                 }
                 let _sub_state_one = sub_states[1];
