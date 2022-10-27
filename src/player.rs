@@ -9,17 +9,6 @@ use rand::Rng;
 use std::fmt;
 
 const CC_RANGE: f32 = 1.;
-#[must_use]
-pub fn character(char_type: &Character) -> [String; 4] {
-    match char_type {
-        Character::Priest => [
-            "priest1_v2_1".to_string(),
-            "priest1_v2_2".to_string(),
-            "priest1_v2_3".to_string(),
-            "priest1_v2_4".to_string(),
-        ],
-    }
-}
 #[derive(Default, Clone, Copy)]
 pub struct Coordinates<T> {
     pub x: T,
@@ -536,7 +525,7 @@ pub fn draw_bar(
             dest_size: Some(dest_size),
             source: Some(Rect {
                 x: 96.,
-                y: 52.,
+                y: 52.,     
                 w: 8.,
                 h: 16.,
             }),

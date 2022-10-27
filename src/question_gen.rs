@@ -109,7 +109,12 @@ impl Question {
 pub fn ask_question(question: &Question, old_input: &String) -> String {
     let mut answer = (*old_input.clone()).to_string();
     let user_answer = answer.chars();
-    draw_text(&question.question[..], 100., 100., 45., BLUE);
+    draw_text(&question.question, 100., 100., 45., BLUE);
+    let s_answer = &question.user_answer[0..**[&question.user_answer.len(),&question.answer.split(',').collect::<Vec<&str>>()[0].len()].iter().min().unwrap()];
+    draw_text(s_answer, 100., 150., 45., BLUE);
+    // let s_answer = &question.user_answer[0..**[&question.user_answer.len(),&question.answer.split(',').collect::<Vec<&str>>()[0].len()].iter().min().unwrap()];
+    // draw_text(s_answer, 100., 150., 45., BLUE);
+    if s_answer.len() >= question.user_answer.len() {
     let entered_char = get_char_pressed();
     if entered_char.is_some() {
         answer = format!(
@@ -120,8 +125,9 @@ pub fn ask_question(question: &Question, old_input: &String) -> String {
     } else {
         answer = String::from_iter(user_answer);
     }
+}
 
-    if is_key_pressed(KeyCode::Enter) {
+    if  is_key_pressed(KeyCode::Enter) {
         match question.check_answer() {
             false => return "false".to_string(),
             true => return "true".to_string(),

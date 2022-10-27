@@ -1,6 +1,7 @@
 use super::map::AdvanceTileTypes;
 use macroquad::prelude::*;
 pub const SPEED: f32 = 16.;
+use enum_assoc::Assoc;
 // use std::collections::HashMap;
 
 #[derive(Copy, Clone, Debug)]
