@@ -32,9 +32,13 @@ impl Question {
         };
     }
     fn check_answer(&self) -> bool {
+        if self.answer == self.user_answer {
+            return true
+        }
         let mut answer: Vec<&str> = self.answer.split(',').collect();
         answer.sort_by(|a, b| b.cmp(a));
         let mut user_input: Vec<&str> = self.user_answer.split(',').collect();
+        println!("{:#?} = {:#?}", answer, user_input);
         user_input.sort_by(|a, b| b.cmp(a));
         if user_input.iter().any(|&i| !i.contains('.')) {
             let mut _new_user_answer: Vec<String> = Vec::new();
@@ -43,8 +47,6 @@ impl Question {
                     _new_user_answer.push(user_input[arg_index].to_string().add_dp())
                 }
             }
-            println!("{:#?}", user_input);
-            println!("{:#?}", answer);
             return answer == _new_user_answer
     } else {
         return answer == user_input
@@ -57,11 +59,8 @@ impl Question {
         let rand_value3: i32 = rng.gen_range(0..10);
         let rand_value4: i32 = rng.gen_range(0..10);
         let m: f32 = (rand_value1 + rand_value4) as f32 / 2.;
-        println!("{}", m);
 
         let p: f32 = (rand_value1 * rand_value4 - rand_value2 * rand_value3) as f32;
-        println!("{}", p);
-        println!("{}", m.powf(2.));
         self.question = format!(
             "Find the Eigen Value of \n[{} {}]\n[{} {}]\nInput without as dp",
             rand_value1, rand_value2, rand_value3, rand_value4
@@ -71,7 +70,6 @@ impl Question {
             m + (m.powf(2.) - p).sqrt(),
             m - (m.powf(2.) - p).sqrt()
         );
-        println!("{}", self.answer);
     }
     fn timestables(&mut self) {
         let mut rng = rand::thread_rng();
@@ -140,6 +138,7 @@ pub fn ask_question(question: &Question, old_input: &String) -> String {
 }
 
     if  is_key_pressed(KeyCode::Enter) {
+        println!("{} = {} is {}", question.user_answer, question.answer, question.check_answer());
         match question.check_answer() {
             false => return "false".to_string(),
             true => return "true".to_string(),

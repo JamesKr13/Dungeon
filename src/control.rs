@@ -17,6 +17,7 @@ pub enum States {
     Dead,
     StartScreen,
     LevelScreen,
+    Victory,
 }
 // pub struct ManageStates {
 //     pub main_state: States,
@@ -111,7 +112,5 @@ impl ScreenMovement {
             4. * f32::from(pre_cast.1) - 4. * f32::from(pre_cast.3),
         )
     }
-    pub fn mouse_pos() {
-        println!("{:#?}", mouse_position());
-    }
+
 }

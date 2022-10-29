@@ -24,6 +24,8 @@ pub mod traits;
 use crate::traits::RemoveLast;
 pub mod tunelling;
 use crate ::tunelling::*;
+
+const MAX_LEVEL: usize = 3;
 // use pathfinding::prelude::dijkstra;
 
 fn draw_mobs(mobs: &Vec<Entity>, textures: [[Texture2D; 4]; 4], bar_texture: Texture2D) {
@@ -52,14 +54,17 @@ fn set_spawn(map: &Vec<Vec<AdvanceTileTypes>>) -> (i16, i16) {
 }
 
 #[must_use]
-pub fn create_mobs(number: i8, map: &Vec<Vec<AdvanceTileTypes>>) -> Vec<Entity> {
+pub fn create_mobs(number: i8, map: &Vec<Vec<AdvanceTileTypes>>, level: usize) -> Vec<Entity> {
     let mut all_entity = Vec::new();
+    let mut rng = rand::thread_rng();
+    let min = (((4*(level+1))/2) as f32).ceil() as i16;
+    let max = (((8*(level+1))/2) as f32).ceil() as i16;
     for _ in 0..number {
         let spawn = set_spawn(map);
         all_entity.push(Entity::intialise(
-            5,
-            5,
-            5,
+            rng.gen_range(min..max),
+            rng.gen_range(min-1..max-2),
+            rng.gen_range(min-1..max-2),
             5.,
             Coordinates {
                 x: spawn.0,
@@ -95,8 +100,8 @@ async fn main() {
     let mut selected = (0, 0);
     let mut player = PlayerCharacter::intialise(
         20,
-        -1,
-        -1,
+        5,
+        5,
         30.,
         Coordinates {
             x: current_player.0,
@@ -110,7 +115,7 @@ async fn main() {
     let mut position_of_mob: Option<usize> = None;
     let mut black_list: Vec<(i16, i16)> = Vec::new();
     let mut all_storage: HashMap<(i16, i16), Storage> = HashMap::new();
-    let mut mobs = create_mobs(12, &map2.tile_placement);
+    let mut mobs = create_mobs(12, &map2.tile_placement,level_count);
     let hud = Texture2D::from_image(&Image::from_file_with_format(
         include_bytes!("../lib/hud-pieces.png"),
         Some(ImageFormat::Png),
@@ -255,9 +260,6 @@ async fn main() {
     map2.exit = (exit.0 as i32,exit.1 as i32);
     loop {
         if !matches!(current_state, States::Menu) {
-            if is_key_pressed(KeyCode::P) {
-                println!("{}", cfg.create_sentence("S".to_string()));
-            }
             set_camera(&Camera2D {
                 target: vec2(target.0, target.1),
                 rotation: smooth_rotation,
@@ -279,6 +281,9 @@ async fn main() {
 
             //Main loop
             if matches!(current_state, States::Play) {
+                if level_count == MAX_LEVEL {
+                    current_state = States::Victory;
+                }
                 map2.draw_map(texture,torch_texture);
                 draw_mobs(&mobs, mob_textures, hud);
                 if is_key_pressed(KeyCode::I) {
@@ -287,6 +292,7 @@ async fn main() {
                         _ => States::Inventory,
                     }
                 }
+                
                 player.draw_player(player_texutres[player.frame as usize]);
                 if matches!(sub_states[1],States::Play) {
                 if 1. < (period.elapsed().unwrap().subsec_nanos() as f32 / 100_000_000.) {
@@ -314,7 +320,6 @@ async fn main() {
                                     current_state = States::Menu;
                                 }
                             }
-                            // println!("NM = {},{}", mob.cor.x,mob.cor.y);
                         }
                         mob_shift_count = 0
                     }
@@ -380,7 +385,6 @@ async fn main() {
                     let interact_key = is_key_pressed(KeyCode::E);
                     if interact_key {
                         //Creates a new level
-                        println!("{},{} == {},{}", player.cor.x,player.cor.y, map2.exit.0, map2.exit.1);
                         if player.cor.x == map2.exit.0 as i16 && player.cor.y == map2.exit.1 as i16  {
                             position_of_mob = None;
                             black_list= Vec::new();
@@ -389,7 +393,7 @@ async fn main() {
                             map2 = MapLayout::default();
                             current_player = set_spawn(&map2.tile_placement);
                             map2.tile_decorate();
-                            mobs = create_mobs(12, &map2.tile_placement);
+                            mobs = create_mobs(12, &map2.tile_placement, level_count);
                             current_player = set_spawn(&map2.tile_placement);
                             let exit = set_spawn(&map2.tile_placement);
                             map2.exit = (exit.0 as i32,exit.1 as i32);
@@ -401,7 +405,6 @@ async fn main() {
                                 all_storage
                                     .entry(current_player)
                                     .or_insert_with(|| Storage::default());
-                                    println!("change made is running", );
                             sub_states[0] = match sub_states[0] {
                                 States::Storage => States::Play,
                                 _ => States::Storage,
@@ -409,20 +412,11 @@ async fn main() {
                         }
                     }
                 }
-                    if matches!(sub_states[0],States::Storage){
-                        println!("=true", );
-                    }
-                    else {
-                        println!("false", );
-                    }
-                        
                     if matches!(sub_states[0], States::Storage)
                     && !black_list.iter().any(|&i| i == current_player)
                     {
                         let pull_item = all_storage[&current_player].clone().display();
                         if pull_item.is_some() {
-                            println!("Section is running", );
-                            println!("{}", &pull_item.clone().unwrap().item_type.to_string());
                             player.storage.storage.push(pull_item.unwrap());
                             black_list.push(current_player);
                             sub_states[0] = States::Play;
@@ -487,7 +481,6 @@ async fn main() {
                 }
                 if position_of_mob.is_some() || matches!(sub_states[1],States::Question){
                     sub_states[1] = States::Question;
-                    println!("{} = {}", question.user_answer,question.user_answer.eq("true"));
                     if question.user_answer.eq("true") {
                         if mobs[position_of_mob.unwrap()].health.adjust(player.damage.deal(None)).is_some() {
                             mobs.remove(position_of_mob.unwrap());
@@ -509,7 +502,6 @@ async fn main() {
                 }
                 let _sub_state_one = sub_states[1];
                 if matches!(_sub_state_one,States::Question) {
-                    println!("{}", question.user_answer);
                     question.user_answer = ask_question(&question, &question.user_answer);
                     if is_key_released(KeyCode::Backspace) {
                         question.user_answer = question.user_answer.remove_last();
@@ -528,20 +520,13 @@ async fn main() {
                     );
                 }
             }
-        } else {
-            
-        }
-        println!("{}", match current_state {
-            States::LevelScreen => "1",
-            States::Menu => "2",
-            _ => "0"
-        });
+        } 
         if matches!(current_state,States::LevelScreen) {
             set_default_camera();
 
-            draw_text(&format!("Floor {}/10",level_count),screen_width()/2.-200.,screen_height()/2.,100.,WHITE);
+            draw_text(&format!("Floor {}/{}",level_count,MAX_LEVEL),screen_width()/2.-200.,screen_height()/2.,100.,WHITE);
             if period.elapsed().unwrap().as_secs() > 1 {
-                draw_text("- Complete -",screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
+                draw_text("- Complete -",screen_width()/2.-150.,screen_height()/2.+100.,50.,WHITE);
             }
             if period.elapsed().unwrap().as_secs() > 3 {
                 current_state = States::Play;
@@ -551,6 +536,13 @@ async fn main() {
             set_default_camera();
 
             draw_text("- Paused -",screen_width()/2.-200.,screen_height()/2.,100.,WHITE);
+        }
+        if matches!(current_state,States::Victory) {
+            set_default_camera();
+
+            draw_text("- Victory -",screen_width()/2.-200.,screen_height()/2.,100.,WHITE);
+            draw_text(&format!("- Score {} -", MAX_LEVEL*(kill_count*5+question_count*10)),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
+
         }
         next_frame().await
     }

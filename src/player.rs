@@ -310,7 +310,6 @@ impl Inventory {
                         }
                     }
                     if is_mouse_button_pressed(MouseButton::Right) && self.state{
-                        println!("runn because {} {}", self.state, self.display_index.unwrap());
                         self.display_index = None;
                         self.state = false;
                     }

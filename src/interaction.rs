@@ -240,10 +240,6 @@ impl CFG {
         let mut cont: Vec<String> = start.split_whitespace().map(str::to_string).collect();
         // let mut new_sentence: String = cont.join(" ");
         while cont.iter().any(|e| self.rules.contains_key(e)) {
-            // println!("call".to_string(), );
-            // for i in &cont {
-            //     println!("{}={}".to_string(), self.rules.contains_key(&i.to_string()));
-            // }
             for index in 0..cont.len() {
                 if self.rules.contains_key(&cont[index][..]) {
                     let options = self.rules.get(&cont[index][..]).unwrap();
@@ -309,11 +305,6 @@ impl DrawText for Item {
         let dimensions = measure_text(&sentence[..], None, font_size as u16, 1.);
         let char_number = ((all_chars.len() / (dimensions.width / width).ceil() as usize) as f32)
             .floor() as usize;
-        println!("{}", all_chars.len());
-        println!(
-            "{},{} so {}",
-            dimensions.width, dimensions.height, char_number
-        );
         let mut each_line: Vec<String> = Vec::new();
         let each_word: Vec<String> = sentence.split(' ').map(str::to_string).collect();
         let mut tally = 0;
@@ -475,18 +466,13 @@ impl Storage {
         if is_mouse_button_down(MouseButton::Left) {
             let pos = mouse_position();
             if pos.0 > vec_space[0] {
-                println!("click",);
                 if pos.1 > 3.*window_size[1]/3. {
                     item = Some(self.items[2].clone());
-                    println!("{}", self.items[2].description);
                 }
                 if pos.1 > 2.*window_size[1]/3. {
                     item = Some(self.items[1].clone());
-                    println!("{}", self.items[1].description);
                 } else {
                     item = Some(self.items[0].clone());
-                    println!("{}", self.items[0].description);
-                    println!("{}", self.items[0].description);
                 }
             }
         }
