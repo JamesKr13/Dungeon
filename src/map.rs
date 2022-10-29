@@ -65,7 +65,7 @@ impl fmt::Display for AdvanceTileTypes {
 }
 #[derive(Clone, Debug)]
 pub struct MapLayout {
-    exit: (i32, i32),
+    pub exit: (i32, i32),
     pub other_map: Vec<Vec<TileType>>,
     pub tile_placement: Vec<Vec<AdvanceTileTypes>>,
     frame: usize,

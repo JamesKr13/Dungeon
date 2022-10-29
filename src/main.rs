@@ -81,14 +81,15 @@ async fn main() {
     texture.set_filter(FilterMode::Nearest);
     let mut map2 = MapLayout::default();
     let mut current_player = set_spawn(&map2.tile_placement);
+    map2.tile_decorate();
     let mut offset = (
         f32::from(current_player.0) * zoom,
         f32::from(current_player.1) * zoom,
     );
-    map2.tile_decorate();
+   
     let mut current_state = States::Play;
     let mut sub_states = [States::Play; 3];
-    let mut all_storage: HashMap<(i16, i16), Storage> = HashMap::new();
+    
     let mut x = 0;
     let mut y = 0;
     let mut selected = (0, 0);
@@ -121,7 +122,7 @@ async fn main() {
 
     let mut position_of_mob: Option<usize> = None;
     let mut black_list: Vec<(i16, i16)> = Vec::new();
-    let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
+    let mut all_storage: HashMap<(i16, i16), Storage> = HashMap::new();
     let mut mobs = create_mobs(12, &map2.tile_placement);
     let hud = Texture2D::from_image(&Image::from_file_with_format(
         include_bytes!("../lib/hud-pieces.png"),
@@ -263,6 +264,8 @@ async fn main() {
     let cfg = CFG::default();
     let mut mob_shift_count = 0;
     let mut moving = false;
+    let exit = set_spawn(&map2.tile_placement);
+    map2.exit = (exit.0 as i32,exit.1 as i32);
     loop {
         if !matches!(current_state, States::Menu) {
             if is_key_pressed(KeyCode::P) {
@@ -318,7 +321,7 @@ async fn main() {
                                 .consider_action(&map2.tile_placement, player.cor, &exculde_self)
                                 .is_some()
                             {
-                                let life_state = player.health.adjust(-1);
+                                let life_state = player.health.adjust(0);
                                 
                                 if life_state.is_some() {
                                     current_state = States::Menu;
@@ -373,18 +376,6 @@ async fn main() {
                 offset.0 += (screen_shift.0) * zoom;
                 offset.1 += (screen_shift.1) * zoom;
                 // draw_rectangle(current_player.0 as f32 *CELL_SIZE,current_player.1 as f32 *CELL_SIZE,CELL_SIZE,CELL_SIZE,RED);
-               
-                if !&found_path.is_none() {
-                    for tile_move in &found_path.clone().unwrap().0 {
-                        draw_rectangle(
-                            tile_move.0 as f32 * CELL_SIZE,
-                            tile_move.1 as f32 * CELL_SIZE,
-                            CELL_SIZE,
-                            CELL_SIZE,
-                            RED,
-                        );
-                    }
-                }
             }
                 set_default_camera();
 
@@ -397,18 +388,33 @@ async fn main() {
                 };
                 
                 //load store for player: store is any storage
-                if store_check != 2 {
-                    all_storage
-                        .entry(current_player)
-                        .or_insert_with(|| Storage::default());
+                
                     // let alt_state = all_storage[&current_player].alt_state;
-                    if is_key_pressed(all_storage[&current_player].key) {
+                    if is_key_pressed(KeyCode::E) {
+                        //Creates a new level
+                        println!("{},{} == {},{}", player.cor.x,player.cor.y, map2.exit.0, map2.exit.1);
+                        if player.cor.x == map2.exit.0 as i16 && player.cor.y == map2.exit.1 as i16  {
+                            position_of_mob = None;
+                            black_list= Vec::new();
+                            all_storage= HashMap::new();
+                            texture.set_filter(FilterMode::Nearest);
+                            map2 = MapLayout::default();
+                            current_player = set_spawn(&map2.tile_placement);
+                            map2.tile_decorate();
+                            mobs = create_mobs(12, &map2.tile_placement);
+                            current_player = set_spawn(&map2.tile_placement);
+                            let exit = set_spawn(&map2.tile_placement);
+                            map2.exit = (exit.0 as i32,exit.1 as i32);
+                        }
+                        if store_check != 2 {
+                            all_storage
+                                .entry(current_player)
+                                .or_insert_with(|| Storage::default());
                         sub_states[0] = match sub_states[0] {
                             States::Storage => States::Play,
                             _ => States::Storage,
-                        }
-                    }
-                    if matches!(sub_states[0], States::Storage)
+                        };
+                        if matches!(sub_states[0], States::Storage)
                         && !black_list.iter().any(|&i| i == current_player)
                     {
                         let pull_item = all_storage[&current_player].clone().display();
@@ -419,6 +425,7 @@ async fn main() {
                             sub_states[0] = States::Play;
                         }
                     }
+                }
                 }
                 // match states of inventory
                 
