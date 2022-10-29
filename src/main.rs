@@ -104,22 +104,9 @@ async fn main() {
         },
         15,
     );
-    // for i in 0..10 {
-    //     let mut this_map = TunnelingAlgorithm::default();
-    //     this_map.generate_level();
-    //     for y in this_map.level {
-    //         for x in y{
-    //             let value = match x {
-    //                 TileType::Wall => '1',
-    //                 TileType::Floor => '0',
-    //             };
-    //             print!("{}", value);
-    //         }
-    //         println!("", );
-    //     }
-    //     println!("", );
-    // }
-
+    let mut kill_count = 0;
+    let mut level_count = 0;
+    let mut question_count = 0;
     let mut position_of_mob: Option<usize> = None;
     let mut black_list: Vec<(i16, i16)> = Vec::new();
     let mut all_storage: HashMap<(i16, i16), Storage> = HashMap::new();
@@ -405,6 +392,9 @@ async fn main() {
                             current_player = set_spawn(&map2.tile_placement);
                             let exit = set_spawn(&map2.tile_placement);
                             map2.exit = (exit.0 as i32,exit.1 as i32);
+                            level_count += 1;
+                            current_state = States::LevelScreen;
+                            period = SystemTime::now();
                         }
                         if store_check != 2 {
                             all_storage
@@ -485,11 +475,13 @@ async fn main() {
                     if question.user_answer.eq("true") {
                         if mobs[position_of_mob.unwrap()].health.adjust(player.damage.deal(None)).is_some() {
                             mobs.remove(position_of_mob.unwrap());
+                            kill_count += 1;
                         }
                         question.create("eigen value");
                         sub_states[1] = States::Play;
                         position_of_mob = None;
                         question.user_answer = String::new();
+                        question_count += 1;
                     }
                     if question.user_answer.eq("false") {
                         question.create("eigen value");
@@ -521,12 +513,29 @@ async fn main() {
                 }
             }
         } else {
-            // draw_texture_ex(menu,0.,0.,WHITE, DrawTextureParams {
-            //     dest_size: Some(vec2(screen_width(),screen_height())),
-            //     ..Default::default()
-            // })
+            
         }
+        println!("{}", match current_state {
+            States::LevelScreen => "1",
+            States::Menu => "2",
+            _ => "0"
+        });
+        if matches!(current_state,States::LevelScreen) {
+            set_default_camera();
 
+            draw_text(&format!("Floor {}/10",level_count),screen_width()/2.-200.,screen_height()/2.,100.,WHITE);
+            if period.elapsed().unwrap().as_secs() > 1 {
+                draw_text("- Complete -",screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
+            }
+            if period.elapsed().unwrap().as_secs() > 3 {
+                current_state = States::Play;
+            }
+        }
+        if matches!(current_state,States::Pause) {
+            set_default_camera();
+
+            draw_text("- Paused -",screen_width()/2.-200.,screen_height()/2.,100.,WHITE);
+        }
         next_frame().await
     }
 }

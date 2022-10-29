@@ -16,6 +16,7 @@ pub enum States {
     Question,
     Dead,
     StartScreen,
+    LevelScreen,
 }
 // pub struct ManageStates {
 //     pub main_state: States,
