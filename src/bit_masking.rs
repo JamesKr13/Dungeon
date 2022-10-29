@@ -1,6 +1,5 @@
 use super::bsp_tree_map_generation::{BSPTree, TileType, WORLD_SIZE};
 use super::map::AdvanceTileTypes;
-
 const SEARCH: (i16, i16, i16, i16, i16, i16, i16, i16) = (1, 2, 4, 8, 16, 32, 64, 128);
 #[derive(Clone)]
 pub struct BitMaskMap {
@@ -11,14 +10,14 @@ pub struct BitMaskMap {
 }
 impl Default for BitMaskMap {
     fn default() -> Self {
-        let mut map = BSPTree::default();
+        let mut map1 = BSPTree::default();
         println!("BitMask Default",);
-        map.generate_level();
+        map1.generate_level();
         Self {
             exit: (0, 0),
-            map: map.level,
+            map: map1.level,
             tile_map: vec![vec![AdvanceTileTypes::Void; WORLD_SIZE.0]; WORLD_SIZE.1],
-            x: map.x,
+            x: map1.x,
         }
     }
 }

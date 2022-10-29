@@ -34,6 +34,9 @@ pub enum Items {
     Bow,
     Empty,
     Staff,
+    Armour,
+    Helmet,
+    Amulet
 }
 impl fmt::Display for Items {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -42,6 +45,9 @@ impl fmt::Display for Items {
             Items::Bow => write!(f, "Bow"),
             Items::Staff => write!(f, "Staff"),
             Items::Empty => write!(f, "Nothing"),
+            Items::Armour => write!(f,"Armour"),
+            Items::Helmet => write!(f,"Helmet"),
+            Items::Amulet => write!(f,"Amulet")
         }
     }
 }
@@ -52,15 +58,15 @@ impl Default for CFG {
     fn default() -> Self {
         Self {
             rules: HashMap::from([
-                ("S".to_string(), vec!["SS Adj Type US WH".to_string(), "MV Type of Adj US WH Fro".to_string()]),
+                ("S".to_string(), vec!["SS Adj Type US WH".to_string(), "Type of Adj US WH Fro".to_string()]),
                 ("WH".to_string(), vec!["by NA".to_string(), "for NA C".to_string(), "With the PR of NA C".to_string()]),
                 ("PR".to_string(),vec!["blood".to_string(), "bones".to_string(), "eyebrows".to_string(), "facial hair".to_string(), "skeleton".to_string(), "ashes".to_string(), "toe nail clippings".to_string()]),
                 ("SS".to_string(), vec!["the".to_string(), "a".to_string(), "there was a".to_string()]),
                 ("Fro".to_string(), vec!["from the Pl".to_string(), "of the Pl".to_string(), "Title of Pl".to_string()]),
                 ("Title".to_string(), vec!["king".to_string(), "begger".to_string(), "knight".to_string(), "manic".to_string(), "innkeep".to_string(), "banker".to_string(), "confused Age".to_string(), "irritaating Age".to_string(), "frustrated Age".to_string(), "theif".to_string(), "lord".to_string(), "lady".to_string(), "queen".to_string(), "ambigous frog".to_string()]),
                 ("Age".to_string(), vec!["old Age".to_string(), "man".to_string(), "women".to_string(), "child".to_string(), "toddle".to_string(), "miiddle aged man".to_string(), "middle aged women".to_string(), "tween".to_string()]),
-                ("US".to_string(), vec!["used".to_string(), "wielded".to_string(), "held".to_string(), "brandished".to_string(), "managed".to_string()]),
-                ("Adj".to_string(), vec!["the bloodthirsty".to_string(), "desperate".to_string(), "gruesome".to_string(), "knightly".to_string(), "nightly".to_string(), "embrassed".to_string(), "wholesale".to_string(), "mass produced".to_string(), "juicy".to_string(), "scrawny".to_string(), "thin".to_string(), "nondescript".to_string(), "administrative".to_string(), "useless".to_string(), "the irratic Title".to_string(), "sometimes functional".to_string()]),
+                ("US".to_string(), vec!["used".to_string(), "wielded".to_string(), "held".to_string(), "brandished".to_string(), "managed".to_string(),"broken".to_string()]),
+                ("Adj".to_string(), vec!["the bloodthirsty".to_string(), "desperate".to_string(), "gruesome".to_string(), "knightly".to_string(), "nightly".to_string(), "embrassed".to_string(), "wholesale".to_string(), "mass produced".to_string(), "juicy".to_string(), "scrawny".to_string(), "thin".to_string(), "nondescript".to_string(), "administrative".to_string(), "useless".to_string(), "crazed".to_string(), "sometimes functional".to_string()]),
                 ("C".to_string(), vec!["to Act AG the Group".to_string()]),
                 ("Act".to_string(), vec!["defend".to_string(), "fend".to_string(), "war".to_string(), "attack".to_string(), "attack unannouced".to_string(), "make false accusations".to_string(), "act tough".to_string()]),
                 ("AG".to_string(), vec!["against".to_string(), "for".to_string()]),
@@ -70,8 +76,8 @@ impl Default for CFG {
                 ("YAX".to_string(), vec!["hight".to_string(), "middle".to_string(), "low".to_string(), "slightly to the left".to_string(), "Direc".to_string(), "".to_string()]),
                 ("Direc".to_string(), vec!["east Direc".to_string(),  "west Direc".to_string(), "south Direc".to_string(), "north Direc".to_string(),"".to_string()]),
                 ("C".to_string(), vec!["the Adj".to_string()]),
-                ("Pl".to_string(), vec!["Direc PlNa".to_string(), "Isles of PlNa".to_string(), "isalnd of PlNa".to_string(), "county of PlNa".to_string(), "suburb of PlNa".to_string(), "YAX city of PlNa".to_string(), "Direc cities of PlNa".to_string(), "towers of PlNa".to_string(), "PlNa forest".to_string(), "desert of PlNa".to_string(), "Adj of PlNa".to_string()]),
-                ("PlNa".to_string(), vec!["Waycastle".to_string(), "Starapple".to_string(),  "Dracburgh".to_string(),  "Lagooncall".to_string(),  "Snakewall".to_string(),  "Pineshear".to_string(),  "Glassfalcon".to_string(),  "Bleakden".to_string(),  "Bymallow".to_string(),  "Hazelmount".to_string()]),
+                ("Pl".to_string(), vec!["Direc PlNa".to_string(), "Isles of PlNa".to_string(), "island of PlNa".to_string(), "county of PlNa".to_string(), "suburb of PlNa".to_string(), "YAX city of PlNa".to_string(), "Direc cities of PlNa".to_string(), "towers of PlNa".to_string(), "PlNa forest".to_string(), "desert of PlNa".to_string(), "Adj of PlNa".to_string()]),
+                ("PlNa".to_string(), vec!["Waycastle".to_string(), "Strapple".to_string(),  "Dracburgh".to_string(),  "Lagooncall".to_string(),  "Snakewall".to_string(),  "Pineshear".to_string(),  "Glassfalcon".to_string(),  "Bleakden".to_string(),  "Bymallow".to_string(),  "Hazelmount".to_string()]),
                 ("NA".to_string(), vec!["FN MN LN".to_string(), "FN MN LN the NUM".to_string()]),
                 ("MN".to_string(), vec!["FN".to_string()]),
                 ("FN".to_string(),vec!["Leonie".to_string(),
@@ -195,6 +201,7 @@ impl Default for CFG {
                         "XI".to_string(),
                     ],
                 ),
+                ("MV".to_string(),  vec!["Pointy".to_string(), "Weak".to_string(), "Ruthless".to_string(), "Keen".to_string(), "Unpleasent".to_string(), "Saintly".to_string(), "Confused".to_string(), "Godly".to_string(), "Zealous".to_string(), "Strong".to_string(), "Nimble".to_string(), "Lazy".to_string(), "Nasty".to_string(), "Tiny".to_string(), "Dull".to_string(), "Unhappy".to_string(), "Shameful".to_string(), "Savage".to_string(), "Awful".to_string()])
             ]),
         }
     }
@@ -229,51 +236,7 @@ impl CFG {
         cont.join(" ")
     }
 }
-#[derive(Default, Clone)]
-pub struct ClickActions {
-    pub run_state: bool,
-    pub on_set_mouse_position: Coordinates<f32>,
-}
-impl ClickActions {
-    pub fn walk_menu(&mut self, _set_pos: bool) {
-        // root_ui().window(hash!(),vec2(pos.x,pos.y),vec2(50.,50.), |ui| {
-        //         if (widgets::Button::new("Move Here")
-        //         .position(vec2(mouse_position().0,mouse_position().1))
-        //         .ui(ui)) {
-        //             println!("Pushed".to_string(), );
-        //         }
-        //         if (widgets::Button::new("Take Item")
-        //         .position(vec2(0.,25.))
-        //         .ui(ui)) {
-        //             println!("Pushed".to_string(), );
-        //         }
-        // });
-        // println!("still fine".to_string(), );
-
-        //     root_ui().window(hash!("Menu"), vec2(mouse_position().0,mouse_position().1), vec2(65., 40.), |ui| {
-        //         if widgets::Button::new("Move Here")
-        //         .position(vec2(0.,0.))
-        //         .ui(ui) {
-        //             self.run_state = false;
-        //             println!("Pushed |.................................................................................................................|", );
-        //             // self.click_action.run_state = true;
-        //         }
-        //         if widgets::Button::new("Take Item")
-        //         .position(vec2(0.,20.))
-        //         .ui(ui) {
-        //             self.run_state = false;
-        //             println!("Pushed |.................................................................................................................|", );
-        //             // self.click_action.run_state = true;
-        //         }
-        // });
-        // if set_pos {
-        //     self.on_set_mouse_position = Coordinates {x:mouse_position().0,y:mouse_position().1};
-        //     root_ui().move_window(hash!("Menu"),vec2(mouse_position().0,mouse_position().1));
-        // }
-        // }
-    }
-}
-trait DrawText {
+pub trait DrawText {
     fn draw_text_given_space(
         &self,
         x_cor: f32,
@@ -281,13 +244,32 @@ trait DrawText {
         width: f32,
         height: f32,
         font_size: f32,
-        sentence: String,
-    );
+        sentence: &String,
+    ) -> ();
+}
+#[derive(Clone,Copy)]
+pub enum Slots {
+    Neck,Hands,Body, Head, None
+}
+impl fmt::Display for Slots {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Slots::Hands => write!(f,"Hands"),
+            Slots::Neck => write!(f,"Neck"),
+            Slots::Body => write!(f,"Chest"),
+            Slots::Head => write!(f,"Head"),
+            _ => write!(f,"No")
+        }
+    }
 }
 #[derive(Clone)]
 pub struct Item {
     pub description: String,
     pub item_type: Items,
+    pub equip: bool,
+    pub slot: Slots,
+    pub name: String,
+    pub effect: [i16;3],
 }
 impl DrawText for Item {
     fn draw_text_given_space(
@@ -297,7 +279,7 @@ impl DrawText for Item {
         width: f32,
         _height: f32,
         font_size: f32,
-        sentence: String,
+        sentence: &String,
     ) {
         let all_chars: Vec<char> = sentence.chars().collect();
         let dimensions = measure_text(&sentence[..], None, font_size as u16, 1.);
@@ -345,23 +327,42 @@ impl DrawText for Item {
         }
     }
 }
+
 impl Item {
-    fn new(description: String) -> Self {
+    fn new(description: String, name: String) -> Self {
         let mut rng = rand::thread_rng();
-        let random_item: usize = rng.gen_range(0..3);
+        let random_item: usize = rng.gen_range(0..=5);
+        let item_type = match random_item {
+            0 => Items::Sword,
+            1 => Items::Bow,
+            2 => Items::Staff,
+            3 => Items::Amulet,
+            4 => Items::Armour,
+            5 => Items::Helmet,
+            _ => Items::Empty,
+        };
+        let name = format!("{} {}",name,&item_type
+        .to_string()[..]);
         let d = description.replace(
             "Type",
-            &(match random_item {
-                0 => Items::Sword,
-                1 => Items::Bow,
-                2 => Items::Staff,
-                _ => Items::Empty,
-            })
-            .to_string()[..],
+            &name,
         );
         Self {
+            slot: match &item_type {
+                Items::Sword => Slots::Hands,
+                Items::Bow => Slots::Hands,
+                Items::Staff => Slots::Hands,
+                Items::Empty => Slots::None,
+                Items::Armour => Slots::Body,
+                Items::Helmet => Slots::Head,
+                Items::Amulet => Slots::Neck
+            },
             description: d,
-            item_type: Items::Sword,
+            item_type: item_type,
+            equip: false,
+            name: name,
+            effect: [rng.gen_range(-5..=5),rng.gen_range(-5..=5),rng.gen_range(-5..5)]
+            
         }
     }
 }
@@ -375,10 +376,11 @@ pub struct Storage {
 }
 impl Default for Storage {
     fn default() -> Self {
+        let sentence = CFG::default();
         let all_items = vec![
-            Item::new(CFG::default().create_sentence("S".to_string())),
-            Item::new(CFG::default().create_sentence("S".to_string())),
-            Item::new(CFG::default().create_sentence("S".to_string())),
+            Item::new(sentence.create_sentence("S".to_string()),sentence.create_sentence("MV".to_string())),
+            Item::new(sentence.create_sentence("S".to_string()),sentence.create_sentence("MV".to_string())),
+            Item::new(sentence.create_sentence("S".to_string()),sentence.create_sentence("MV".to_string())),
         ];
         // ivsk.create_inventory_skins(&all_items);
         Self {
@@ -392,8 +394,10 @@ impl Default for Storage {
 }
 impl Storage {
     pub fn display(&mut self) -> Option<Item> {
-        let item: Option<Item> = None;
+        let mut item: Option<Item> = None;
+        
         let window_size = vec2(screen_width() / 3., 3. * screen_height() / 4.);
+        let vec_space = [screen_width() - window_size[0],0.];
         // draw_rectangle(100.,100.,400.,400.,BLUE);
         draw_rectangle(
             screen_width() - window_size[0],
@@ -404,55 +408,47 @@ impl Storage {
         );
         self.items[0].draw_text_given_space(
             screen_width() - window_size[0],
-            200.,
+            window_size[1]/3.,
             window_size[0],
             window_size[1] / 3.,
             20.,
-            self.items[0].description.clone(),
+            &self.items[0].description.clone(),
         );
         self.items[0].draw_text_given_space(
             screen_width() - window_size[0],
-            200. + window_size[1] / 3.,
+            2.*window_size[1] / 3.,
             400.,
             400.,
             20.,
-            self.items[1].description.clone(),
+            &self.items[1].description.clone(),
         );
         self.items[0].draw_text_given_space(
             screen_width() - window_size[0],
-            200. + 2. * window_size[1] / 3.,
+            3. * window_size[1] / 3.,
             window_size[0],
             window_size[1] / 3.,
             20.,
-            self.items[2].description.clone(),
+            &self.items[2].description.clone(),
         );
+        if is_mouse_button_down(MouseButton::Left) {
+            let pos = mouse_position();
+            if pos.0 > vec_space[0] {
+                println!("click",);
+                if pos.1 > 3.*window_size[1]/3. {
+                    item = Some(self.items[2].clone());
+                    println!("{}", self.items[2].description);
+                }
+                if pos.1 > 2.*window_size[1]/3. {
+                    item = Some(self.items[1].clone());
+                    println!("{}", self.items[1].description);
+                } else {
+                    item = Some(self.items[0].clone());
+                    println!("{}", self.items[0].description);
+                    println!("{}", self.items[0].description);
+                }
+            }
+        }
         item
     }
 }
 
-pub struct Inventory {
-    _content: [Items; INVENTORY_SPACE],
-}
-impl Default for Inventory {
-    fn default() -> Self {
-        Self {
-            _content: [Items::Empty; INVENTORY_SPACE],
-        }
-    }
-}
-impl Inventory {
-    pub fn display_inventory(&mut self) {
-        for row in 0..COL_ROW_SIZE {
-            for col in 0..COL_ROW_SIZE {
-                draw_rectangle_lines(
-                    screen_width() / 3. - col as f32 * 25.,
-                    100. - row as f32 * 25.,
-                    25.,
-                    25.,
-                    5.,
-                    BLUE,
-                )
-            }
-        }
-    }
-}

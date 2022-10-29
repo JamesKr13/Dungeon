@@ -15,15 +15,19 @@ pub struct Question {
 impl Question {
     pub fn create(&mut self, q_type: &str) {
         self.user_answer = String::new();
-        match q_type {
-            "eigen value" => {
+        let mut rng = rand::thread_rng();
+        let chance: usize = rng.gen_range(0..3);
+        match chance {
+            0 => {
                 self.eigen_values_simple();
                 Some(())
             }
-            "simple mult" => {
+            1 => {
                 self.timestables();
                 Some(())
-            }
+            },
+            2 => {self.cofactor_expansion_generation();
+            Some(())}
             _ => None,
         };
     }
@@ -39,14 +43,13 @@ impl Question {
                     _new_user_answer.push(user_input[arg_index].to_string().add_dp())
                 }
             }
-            println!("{:#?}", _new_user_answer);
+            println!("{:#?}", user_input);
             println!("{:#?}", answer);
-            return !matches!(answer, _new_user_answer);
-        }
-        println!("{:#?}", user_input);
-        println!("{:#?}", answer);
-        !matches!(answer, _user_input)
+            return answer == _new_user_answer
+    } else {
+        return answer == user_input
     }
+}
     fn eigen_values_simple(&mut self) {
         let mut rng = rand::thread_rng();
         let rand_value1: i32 = rng.gen_range(0..10);
@@ -60,7 +63,7 @@ impl Question {
         println!("{}", p);
         println!("{}", m.powf(2.));
         self.question = format!(
-            "Find the Eigen Value of [{} {}]\n[{} {}] Input without as dp",
+            "Find the Eigen Value of \n[{} {}]\n[{} {}]\nInput without as dp",
             rand_value1, rand_value2, rand_value3, rand_value4
         );
         self.answer = format!(
@@ -82,16 +85,23 @@ impl Question {
         self.answer.eq(user_answer)
     }
     fn cofactor_expansion(&self, matrix: &[[i32; 3]; 3]) -> i32 {
-        matrix[0][0] * (matrix[2][1] * matrix[1][2] - matrix[1][2] * matrix[1][1])
-            - matrix[0][1] * (matrix[2][0] * matrix[1][2] - matrix[1][2] * matrix[1][0])
-            + matrix[0][2] * (matrix[2][1] * matrix[1][0] - matrix[1][0] * matrix[1][1])
+        let a = matrix[0][0];
+        let b = matrix[0][1];
+        let c = matrix[0][2];
+        let d = matrix[1][0];
+        let e = matrix[1][1];
+        let f = matrix[1][2];
+        let g = matrix[2][0];
+        let h = matrix[2][1];
+        let i = matrix[2][2];
+        return a*(e*i-h*f) - b*(d*i-g*f) + c*(d*h-g*e)
     }
     fn cofactor_expansion_generation(&mut self) {
         let mut rng = rand::thread_rng();
-        let values: [[i32; 3]; 3] = [[rng.gen_range(-20..20); 3]; 3];
-        self.answer = format!("{}", &self.cofactor_expansion(&values));
+        let values: [[i32; 3]; 3] = [[rng.gen_range(-20..20),rng.gen_range(-20..20),rng.gen_range(-20..20)],[rng.gen_range(-20..20),rng.gen_range(-20..20),rng.gen_range(-20..20)],[rng.gen_range(-20..20),rng.gen_range(-20..20),rng.gen_range(-20..20)]];
+        self.answer = format!("{}", *&self.cofactor_expansion(&values) as f32);
         self.question = format!(
-            "[{} {} {}]\n[{} {} {}]\n[{} {} {}]",
+            "Find the Determinant of this matrix \n[{} {} {}]\n[{} {} {}]\n[{} {} {}]",
             values[0][0],
             values[0][1],
             values[0][2],
@@ -109,11 +119,13 @@ impl Question {
 pub fn ask_question(question: &Question, old_input: &String) -> String {
     let mut answer = (*old_input.clone()).to_string();
     let user_answer = answer.chars();
-    draw_text(&question.question, 100., 100., 45., BLUE);
+    let q: Vec<&str> = question.question.split("\n").collect();
+    for line in 0..q.len() {
+        draw_text(q[line], 100., 100.+50.*line as f32, 45., BLUE);
+    }
+    
     let s_answer = &question.user_answer[0..**[&question.user_answer.len(),&question.answer.split(',').collect::<Vec<&str>>()[0].len()].iter().min().unwrap()];
-    draw_text(s_answer, 100., 150., 45., BLUE);
-    // let s_answer = &question.user_answer[0..**[&question.user_answer.len(),&question.answer.split(',').collect::<Vec<&str>>()[0].len()].iter().min().unwrap()];
-    // draw_text(s_answer, 100., 150., 45., BLUE);
+    draw_text(s_answer, 100., screen_height()-150., 45., BLUE);
     if s_answer.len() >= question.user_answer.len() {
     let entered_char = get_char_pressed();
     if entered_char.is_some() {

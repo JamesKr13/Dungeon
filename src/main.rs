@@ -22,6 +22,8 @@ use crate::question_gen::{ask_question, Question};
 use std::time::SystemTime;
 pub mod traits;
 use crate::traits::RemoveLast;
+pub mod tunelling;
+use crate ::tunelling::*;
 // use pathfinding::prelude::dijkstra;
 
 fn draw_mobs(mobs: &Vec<Entity>, textures: [[Texture2D; 4]; 4], bar_texture: Texture2D) {
@@ -99,7 +101,24 @@ async fn main() {
             x: current_player.0,
             y: current_player.1,
         },
+        15,
     );
+    // for i in 0..10 {
+    //     let mut this_map = TunnelingAlgorithm::default();
+    //     this_map.generate_level();
+    //     for y in this_map.level {
+    //         for x in y{
+    //             let value = match x {
+    //                 TileType::Wall => '1',
+    //                 TileType::Floor => '0',
+    //             };
+    //             print!("{}", value);
+    //         }
+    //         println!("", );
+    //     }
+    //     println!("", );
+    // }
+
     let mut position_of_mob: Option<usize> = None;
     let mut black_list: Vec<(i16, i16)> = Vec::new();
     let found_path: Option<(Vec<(i32, i32)>, u32)> = None;
@@ -111,6 +130,7 @@ async fn main() {
     hud.set_filter(FilterMode::Nearest);
     // let menu = Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/cave.png"),Some(ImageFormat::Png)));
     // menu.set_filter(FilterMode::Nearest);
+    
     let mut user_answer = String::new();
     let mob_textures: [[Texture2D; 4]; 4] = [
         [
@@ -242,6 +262,7 @@ async fn main() {
     question.create("eigen value");
     let cfg = CFG::default();
     let mut mob_shift_count = 0;
+    let mut moving = false;
     loop {
         if !matches!(current_state, States::Menu) {
             if is_key_pressed(KeyCode::P) {
@@ -270,6 +291,12 @@ async fn main() {
             if matches!(current_state, States::Play) {
                 map2.draw_map(texture,torch_texture);
                 draw_mobs(&mobs, mob_textures, hud);
+                if is_key_pressed(KeyCode::I) {
+                    sub_states[1] = match sub_states[1] {
+                        States::Inventory => States::Play,
+                        _ => States::Inventory,
+                    }
+                }
                 player.draw_player(player_texutres[player.frame as usize]);
                 if matches!(sub_states[1],States::Play) {
                 if 1. < (period.elapsed().unwrap().subsec_nanos() as f32 / 100_000_000.) {
@@ -280,6 +307,9 @@ async fn main() {
                     }
                     if mob_shift_count == 4 {
                         map2.frame_up();
+                        if !moving {
+                            player.stamina.adjust(1);
+                        }
                         for mob_index in 0..mobs.len() {
                             let exculde_self: Vec<Coordinates<i16>> =
                                 mobs.clone().into_iter().map(|mob| mob.cor).collect();
@@ -325,13 +355,17 @@ async fn main() {
                                 (current_player.0 - shift.1) as usize,
                                 (current_player.1 - shift.0) as usize,
                             ),
-                        )
+                        ) && player.stamina.points != 0
                     {
                         current_player.0 -= shift.1;
                         current_player.1 -= shift.0;
                         offset.0 = f32::from(current_player.0) * CELL_SIZE * zoom;
                         offset.1 = f32::from(current_player.1) * CELL_SIZE * zoom * screen_width()
                             / screen_height();
+                        player.stamina.adjust(-1);
+                        moving = true
+                    } else {
+                        moving = false;
                     }
                 }
                 let screen_shift = ScreenMovement::default();
@@ -349,12 +383,6 @@ async fn main() {
                             CELL_SIZE,
                             RED,
                         );
-                    }
-                }
-                if is_key_pressed(KeyCode::I) {
-                    sub_states[1] = match sub_states[1] {
-                        States::Inventory => States::Play,
-                        _ => States::Inventory,
                     }
                 }
             }
@@ -385,6 +413,7 @@ async fn main() {
                     {
                         let pull_item = all_storage[&current_player].clone().display();
                         if pull_item.is_some() {
+                            println!("{}", &pull_item.clone().unwrap().item_type.to_string());
                             player.storage.storage.push(pull_item.unwrap());
                             black_list.push(current_player);
                             sub_states[0] = States::Play;
@@ -395,14 +424,29 @@ async fn main() {
                 
                 // display inventory
                 if matches!(sub_states[1], States::Inventory) {
-                    player.storage.display_inventory();
+                    let effects = player.storage.display_inventory();
+                    if effects.is_some() {
+                        let stat_effects = effects.unwrap();
+                        player.health.base_adjust(stat_effects[0]);
+                        player.health.adjust(stat_effects[0]);
+                        player.damage.adjust(stat_effects[1]);
+                    }
                 }
-                player.health.draw_health(
+                player.health.draw_points(
                     hud,
                     screen_width() / 50.,
                     screen_height() / 50.,
                     vec2(20., 40.),
                     true,
+                    true,
+                );
+                player.stamina.draw_points(
+                    hud,
+                    screen_width() / 50.,
+                    screen_height() / 50.+40.,
+                    vec2(20., 40.),
+                    true,
+                    false,
                 );
                 //Mouse Movement and finding of mouse postion to cell
                 y = (((((mouse_position_local()[1] + offset.1)
@@ -415,7 +459,7 @@ async fn main() {
                 x = -((((mouse_position_local()[0] - offset.0) / zoom) as i16 | 15) + 1) / 16;
                 player.cor.x = current_player.0;
                 player.cor.y = current_player.1;
-                if is_mouse_button_down(MouseButton::Left){
+                if is_mouse_button_down(MouseButton::Left) && abs(x) < WORLD_SIZE.0 as i16 && abs(y) < WORLD_SIZE.1 as i16{
                     if position_of_mob.is_none() {
                     position_of_mob =
                         mobs.iter().position(|mob| mob.cor.x == x && mob.cor.y == y);

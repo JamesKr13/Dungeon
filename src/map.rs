@@ -1,5 +1,6 @@
 use super::bit_masking::BitMaskMap;
 use super::bsp_tree_map_generation::{TileType, WORLD_SIZE};
+
 pub const CELL_SIZE: f32 = 16.;
 extern crate rand;
 use macroquad::prelude::*;
