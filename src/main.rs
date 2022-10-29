@@ -280,10 +280,7 @@ async fn main() {
             }
 
             //Main loop
-            if matches!(current_state, States::Play) {
-                if level_count == MAX_LEVEL {
-                    current_state = States::Victory;
-                }
+            if matches!(current_state, States::Play) && level_count != MAX_LEVEL{
                 map2.draw_map(texture,torch_texture);
                 draw_mobs(&mobs, mob_textures, hud);
                 if is_key_pressed(KeyCode::I) {
@@ -508,14 +505,14 @@ async fn main() {
                 let _sub_state_one = sub_states[1];
                 if matches!(_sub_state_one,States::Question) {
                     question.user_answer = ask_question(&question, &question.user_answer);
-                    if is_key_released(KeyCode::Backspace) {
+                    if is_key_pressed(KeyCode::Backspace) {
                         question.user_answer = question.user_answer.remove_last();
                     }
             }
                 if selected != (x, y) {
                     sub_states[2] = States::Play;
                 }
-                if x < WORLD_SIZE.0 as i16 && y < WORLD_SIZE.1 as i16 {
+                if x < WORLD_SIZE.0 as i16 -1 && y < WORLD_SIZE.1 as i16 -1 {
                     draw_text(
                         &(&map2.tile_placement[abs(y) as usize][abs(x) as usize].to_string())[..],
                         40.,
@@ -524,6 +521,8 @@ async fn main() {
                         BLUE,
                     );
                 }
+            } else {
+                 current_state = States::Victory;
             }
         } 
         if matches!(current_state,States::LevelScreen) {

@@ -35,6 +35,9 @@ impl Question {
         if self.answer == self.user_answer {
             return true
         }
+        if self.user_answer.len() == 0 {
+            return false
+        }
         let mut answer: Vec<&str> = self.answer.split(',').collect();
         answer.sort_by(|a, b| b.cmp(a));
         let mut user_input: Vec<&str> = self.user_answer.split(',').collect();
@@ -47,7 +50,12 @@ impl Question {
                     _new_user_answer.push(user_input[arg_index].to_string().add_dp())
                 }
             }
-            return answer == _new_user_answer
+            if _new_user_answer.len() == 2{
+                return (answer.iter().any(|ans| ans.eq(&_new_user_answer[0]) || ans.eq(&_new_user_answer[1])))
+            } else {
+                return (answer.iter().any(|ans| ans.eq(&_new_user_answer[0])))
+            }
+            
     } else {
         return answer == user_input
     }
@@ -62,7 +70,7 @@ impl Question {
 
         let p: f32 = (rand_value1 * rand_value4 - rand_value2 * rand_value3) as f32;
         self.question = format!(
-            "Find the Eigen Value of \n[{} {}]\n[{} {}]\nInput without as dp",
+            "Find a Eigen Value for the Matric \n[{} {}]\n[{} {}]\nInput 2 dp without rounding",
             rand_value1, rand_value2, rand_value3, rand_value4
         );
         self.answer = format!(
@@ -127,7 +135,7 @@ pub fn ask_question(question: &Question, old_input: &String) -> String {
     draw_text(s_answer, 100., screen_height()-150., 45., BLUE);
     if s_answer.len() >= question.user_answer.len() {
     let entered_char = get_char_pressed();
-    if entered_char.is_some() {
+    if entered_char.is_some() && "1234567890.,-+".contains(entered_char.unwrap()){
         answer = format!(
             "{}{}",
             String::from_iter(user_answer),
