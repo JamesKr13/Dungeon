@@ -480,7 +480,12 @@ async fn main() {
                     }
                 }
                 if position_of_mob.is_some() || matches!(sub_states[1],States::Question){
+                    if !matches!(sub_states[1],States::Question) {
+                        question.user_answer = String::new();
+                        println!("running", );
+                    }
                     sub_states[1] = States::Question;
+                   
                     if question.user_answer.eq("true") {
                         if mobs[position_of_mob.unwrap()].health.adjust(player.damage.deal(None)).is_some() {
                             mobs.remove(position_of_mob.unwrap());

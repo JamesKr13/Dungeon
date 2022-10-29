@@ -75,6 +75,7 @@ impl Question {
         let mut rng = rand::thread_rng();
         let rand_value1: i32 = rng.gen_range(-20..20);
         let rand_value2: i32 = rng.gen_range(-20..20);
+        println!("{}", self.answer);
         self.answer = format!("{}", (rand_value1 * rand_value2));
         self.question = format!("{} x {}", rand_value1, rand_value2);
     }
