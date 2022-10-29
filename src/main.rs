@@ -377,7 +377,8 @@ async fn main() {
                 //load store for player: store is any storage
                 
                     // let alt_state = all_storage[&current_player].alt_state;
-                    if is_key_pressed(KeyCode::E) {
+                    let interact_key = is_key_pressed(KeyCode::E);
+                    if interact_key {
                         //Creates a new level
                         println!("{},{} == {},{}", player.cor.x,player.cor.y, map2.exit.0, map2.exit.1);
                         if player.cor.x == map2.exit.0 as i16 && player.cor.y == map2.exit.1 as i16  {
@@ -395,28 +396,39 @@ async fn main() {
                             level_count += 1;
                             current_state = States::LevelScreen;
                             period = SystemTime::now();
+                        } else {
+                            if store_check != 2 {
+                                all_storage
+                                    .entry(current_player)
+                                    .or_insert_with(|| Storage::default());
+                                    println!("change made is running", );
+                            sub_states[0] = match sub_states[0] {
+                                States::Storage => States::Play,
+                                _ => States::Storage,
+                            };
                         }
-                        if store_check != 2 {
-                            all_storage
-                                .entry(current_player)
-                                .or_insert_with(|| Storage::default());
-                        sub_states[0] = match sub_states[0] {
-                            States::Storage => States::Play,
-                            _ => States::Storage,
-                        };
-                        if matches!(sub_states[0], States::Storage)
-                        && !black_list.iter().any(|&i| i == current_player)
+                    }
+                }
+                    if matches!(sub_states[0],States::Storage){
+                        println!("=true", );
+                    }
+                    else {
+                        println!("false", );
+                    }
+                        
+                    if matches!(sub_states[0], States::Storage)
+                    && !black_list.iter().any(|&i| i == current_player)
                     {
                         let pull_item = all_storage[&current_player].clone().display();
                         if pull_item.is_some() {
+                            println!("Section is running", );
                             println!("{}", &pull_item.clone().unwrap().item_type.to_string());
                             player.storage.storage.push(pull_item.unwrap());
                             black_list.push(current_player);
                             sub_states[0] = States::Play;
+                            
                         }
                     }
-                }
-                }
                 // match states of inventory
                 
                 // display inventory
@@ -427,6 +439,10 @@ async fn main() {
                         player.health.base_adjust(stat_effects[0]);
                         player.health.adjust(stat_effects[0]);
                         player.damage.adjust(stat_effects[1]);
+                        player.stamina.adjust(stat_effects[2]);
+                        player.stamina.base_adjust(stat_effects[2]);
+                        player.health.adjust(stat_effects[3]);
+                        player.stamina.adjust(stat_effects[4]);
                     }
                 }
                 player.health.draw_points(

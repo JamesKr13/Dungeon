@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::fmt;
 extern crate rand;
 use ::rand::Rng;
+use enum_assoc::Assoc;
 
 // pub struct Action {
 //     pub key: KeyCode,
@@ -28,15 +29,33 @@ use ::rand::Rng;
 const COL_ROW_SIZE: usize = 5;
 const INVENTORY_SPACE: usize = 25;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy,Assoc)]
+#[func(pub const fn consumable(&self) -> bool)]
 pub enum Items {
+    #[assoc(consumable= false)]
     Sword,
+    #[assoc(consumable= false)]
     Bow,
+    #[assoc(consumable= false)]
     Empty,
+    #[assoc(consumable= false)]
     Staff,
+    #[assoc(consumable= false)]
     Armour,
+    #[assoc(consumable= false)]
     Helmet,
-    Amulet
+    #[assoc(consumable= false)]
+    Amulet,
+    #[assoc(consumable= true)]
+    Health,
+    #[assoc(consumable= true)]
+    Stamina,
+    #[assoc(consumable= true)]
+    BigHealth,
+    #[assoc(consumable= true)]
+    BigStamina,
+    #[assoc(consumable= true)]
+    Mystery,
 }
 impl fmt::Display for Items {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -47,7 +66,12 @@ impl fmt::Display for Items {
             Items::Empty => write!(f, "Nothing"),
             Items::Armour => write!(f,"Armour"),
             Items::Helmet => write!(f,"Helmet"),
-            Items::Amulet => write!(f,"Amulet")
+            Items::Amulet => write!(f,"Amulet"),
+            Items::Health => write!(f, "Potion of Healing"),
+            Items::Stamina => write!(f,"Potion of Stamina"),
+            Items::BigStamina => write!(f,"Potion of Larger Stamina"),
+            Items::BigHealth => write!(f,"Potion of Larger Healing"),
+            Items::Mystery => write!(f,"Potion of mystery, who knows what will happen but one thing's for sure,")
         }
     }
 }
@@ -269,7 +293,7 @@ pub struct Item {
     pub equip: bool,
     pub slot: Slots,
     pub name: String,
-    pub effect: [i16;3],
+    pub effect: [i16;5],
 }
 impl DrawText for Item {
     fn draw_text_given_space(
@@ -331,7 +355,7 @@ impl DrawText for Item {
 impl Item {
     fn new(description: String, name: String) -> Self {
         let mut rng = rand::thread_rng();
-        let random_item: usize = rng.gen_range(0..=5);
+        let random_item: usize = rng.gen_range(0..=10);
         let item_type = match random_item {
             0 => Items::Sword,
             1 => Items::Bow,
@@ -339,14 +363,31 @@ impl Item {
             3 => Items::Amulet,
             4 => Items::Armour,
             5 => Items::Helmet,
+            6 => Items::Health,
+            7 => Items::BigHealth,
+            8 => Items::BigStamina,
+            9 => Items::Stamina,
+            10 => Items::Mystery,
             _ => Items::Empty,
         };
         let name = format!("{} {}",name,&item_type
         .to_string()[..]);
-        let d = description.replace(
-            "Type",
-            &name,
-        );
+        let effect: [i16;5];
+        let mut d: String = String::new();
+        if random_item <= 5 {
+            d = description.replace(
+                "Type",
+                &name,
+            );
+            effect = [rng.gen_range(-5..=5),rng.gen_range(-5..=5),rng.gen_range(-5..=5),0,0]
+        } else {
+            if matches!(item_type,Items::Mystery) {
+                effect = [rng.gen_range(-3..=3),rng.gen_range(-2..=2),rng.gen_range(-3..3),rng.gen_range(-3..=3),rng.gen_range(-3..=3)];
+            } else {
+                effect = [0,0,0,0,0]
+            }
+            d = format!("Magical {} that's gonna take you on fantastical journey.",name);
+        }
         Self {
             slot: match &item_type {
                 Items::Sword => Slots::Hands,
@@ -355,13 +396,14 @@ impl Item {
                 Items::Empty => Slots::None,
                 Items::Armour => Slots::Body,
                 Items::Helmet => Slots::Head,
-                Items::Amulet => Slots::Neck
+                Items::Amulet => Slots::Neck,
+                _ => Slots::None
             },
             description: d,
             item_type: item_type,
             equip: false,
             name: name,
-            effect: [rng.gen_range(-5..=5),rng.gen_range(-5..=5),rng.gen_range(-5..5)]
+            effect: effect
             
         }
     }

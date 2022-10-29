@@ -1,5 +1,5 @@
 // use std::collections::HashMap;
-use super::interaction::{Item,DrawText};
+use super::interaction::{Item,DrawText,Items};
 extern crate rand;
 use super::map::AdvanceTileTypes;
 use super::map::CELL_SIZE;
@@ -32,16 +32,16 @@ pub struct Points {
 }
 impl Points {
     pub fn adjust(&mut self, increment: i16) -> Option<bool> {
-        if self.points + increment <= self.base_points {
+        if self.points + increment <= self.base_points && self.points + increment >= 0 {
             self.points += increment;
-        };
-        if self.points + increment >= 0 {
             return None;
-        }
+        };
         Some(false)
     }
     pub fn base_adjust(&mut self, increment: i16) {
-        self.base_points += increment;
+        if self.base_points + increment >= 0{
+            self.base_points += increment;
+        };
     }
     #[must_use]
     pub fn new(base_points: i16) -> Self {
@@ -197,7 +197,7 @@ impl Default for Inventory {
     }
 }
 impl Inventory {
-    pub fn display_inventory(&mut self) -> Option<[i16;3]>{
+    pub fn display_inventory(&mut self) -> Option<[i16;5]>{
         let button_skin = {
             let button_style = self.skin.clone();
             Skin {
@@ -229,8 +229,36 @@ impl Inventory {
             },
             
         );
-        let mut output_effect: Option<[i16;3]> = None;
+        let mut output_effect: Option<[i16;5]> = None;
         if self.display_index.is_some(){
+            let effect: [i16;5];
+            let effect_text: String;
+            let item_type = self.storage[self.display_index.unwrap()].item_type;
+            let items_uses_text: (&'static str,&'static str);
+            if item_type.consumable() {
+                effect_text = format!("{}",match item_type {
+                    Items::BigHealth => "Heals 10 health",
+                    Items::BigStamina => "Regens 10 Stamina",
+                    Items::Stamina => "Regens 5 Stamina",
+                    Items::Health => "Heals 5 Health",
+                    Items::Mystery => "I don't know what it does but drink it.",
+                    _ => "No effects"
+                } );
+                effect = match item_type {
+                    Items::BigHealth => [0,0,0,10,0],
+                    Items::BigStamina => [0,0,0,0,10],
+                    Items::Stamina => [0,0,0,0,5],
+                    Items::Health => [0,0,0,5,0],
+                    Items::Mystery => self.storage[self.display_index.unwrap()].effect,
+                    _ => [0,0,0,0,0]
+                };
+                items_uses_text = ("Consume it","Consumed");
+            } else {
+                let temp = self.storage[self.display_index.unwrap()].effect;
+                effect = [temp[0],temp[1],temp[2],0,0];
+                effect_text = format!("Health {}, Damage {}, Stamina {}",effect[0],effect[1],effect[2]);
+                items_uses_text = ("Equip","Unequip");
+            }
             self.storage.sort_by(|a,b| b.equip.cmp(&a.equip));
         root_ui().window(
             hash!("InfoMenu"),
@@ -255,25 +283,28 @@ impl Inventory {
                         widgets::Button::new(vector[line].clone()).position(vec2(0.,line as f32 *25.))
                     .ui(ui);
                     }
-                    let effect = self.storage[self.display_index.unwrap()].effect;
-                    let effect_text = format!("Health {}, Damage {}, Stamina {}",effect[0],effect[1],effect[2]);
+                    
                     widgets::Button::new(effect_text).position(vec2(0.,(vector.len()+2) as f32 *25.))
                         .ui(ui);
                     if self.storage[self.display_index.unwrap()].equip {
-                        if widgets::Button::new("Unequip").position(vec2(0.,(vector.len()+1) as f32 *25.))
+                        if widgets::Button::new(items_uses_text.1).position(vec2(0.,(vector.len()+1) as f32 *25.))
                         .ui(ui) {
                             self.storage[self.display_index.unwrap()].equip = false;
                             let all_effects = self.storage[self.display_index.unwrap()].effect;
-                            output_effect = Some([-all_effects[0],-all_effects[1],-all_effects[2]]);
+                            output_effect = Some([-all_effects[0],-all_effects[1],-all_effects[2],0,0]);
                         }
                     } else {
-                        if widgets::Button::new("equip").position(vec2(0.,(vector.len()+1) as f32 *25.))
+                        if widgets::Button::new(items_uses_text.0).position(vec2(0.,(vector.len()+1) as f32 *25.))
                         .ui(ui) {
                             let if_any: Vec<Item> = self.storage.clone().into_iter().filter(|item| item.equip == true && item.slot.to_string() == self.storage[self.display_index.unwrap()].slot.to_string()).collect();
                             if if_any.len() == 0 {
-                            self.storage[self.display_index.unwrap()].equip = true;
-                            let all_effects = self.storage[self.display_index.unwrap()].effect;
-                            output_effect = Some([all_effects[0],all_effects[1],all_effects[2]])
+                            if item_type.consumable() {
+                                self.storage.remove(self.display_index.unwrap());
+                                self.display_index = None;
+                            } else {
+                                self.storage[self.display_index.unwrap()].equip = true;
+                            }
+                            output_effect = Some(effect);
 
                             }
                         }
@@ -649,7 +680,7 @@ pub fn draw_bar(
     }
     draw_texture_ex(
         texture,
-        x + (f32::from(shift) + 1.) * dest_size[0] + dest_size[0] * (inner_length - 1) as f32,
+        x + (f32::from(shift) + 2.) * dest_size[0] + dest_size[0] * (inner_length - 1) as f32,
         y,
         WHITE,
         DrawTextureParams {
@@ -665,7 +696,7 @@ pub fn draw_bar(
     );
     draw_texture_ex(
         texture,
-        x + (f32::from(shift) + 1.) * dest_size[0] + dest_size[0] * (inner_length) as f32,
+        x + (f32::from(shift) + 2.) * dest_size[0] + dest_size[0] * (inner_length) as f32,
         y,
         WHITE,
         DrawTextureParams {
