@@ -6,7 +6,7 @@ use std::fmt;
 extern crate rand;
 use ::rand::Rng;
 use enum_assoc::Assoc;
-
+use macroquad::ui::{hash, root_ui, widgets, Skin, Style};
 // pub struct Action {
 //     pub key: KeyCode,
 //     pub state: States
@@ -430,52 +430,88 @@ impl Storage {
         let mut item: Option<Item> = None;
         
         let window_size = vec2(screen_width() / 3., 3. * screen_height() / 4.);
-        let vec_space = [screen_width() - window_size[0],0.];
-        // draw_rectangle(100.,100.,400.,400.,BLUE);
-        draw_rectangle(
-            screen_width() - window_size[0],
-            0.,
-            window_size[0],
-            screen_height(),
-            BLACK,
+        root_ui().window(
+            hash!("Storage"),
+            vec2(screen_width()-300., screen_height() / 15.),
+            vec2(300., screen_height() * 13.0 / 15.),
+            |ui| {
+                let mut line_tally= 0;
+                for each_item_index in 0..self.items.len() {
+                    let mut each_line: Vec<String> = Vec::new();
+                    let each_word: Vec<String> = self.items[each_item_index].description.split(" ").map(str::to_string).collect();
+                    let mut tally = 0;
+                    for word in each_word {
+                        if !each_line.is_empty() && tally + word.len() <= 15 {
+                            tally += word.len();
+                            let index = each_line.len() - 1;
+                            each_line[index].push_str(&format!(" {}", word)[..]);
+                        } else {
+                            if  each_line.len() != 0 {
+                                widgets::Label::new(each_line[each_line.len()-1].clone()).position(vec2(0., (line_tally) as f32 * 25.))
+                                .ui(ui);
+                            }
+                           
+                            tally = 0;
+                            line_tally += 1;
+                            each_line.push(word);
+                        }
+                    }
+                    widgets::Label::new(each_line[each_line.len()-1].clone()).position(vec2(0., (line_tally) as f32 * 25.))
+                                .ui(ui);
+                    if widgets::Button::new("Take").position(vec2(0., (line_tally+1) as f32 * 25.)).ui(ui) {
+                        item = Some(self.items[each_item_index].clone());
+                    }
+                    line_tally += 1;
+                    ui.separator();
+                    ui.move_window(hash!("Storage"),vec2(screen_width()-300., screen_height() / 15.));
+                }                
+            },
+            
         );
-        self.items[0].draw_text_given_space(
-            screen_width() - window_size[0],
-            window_size[1]/3.,
-            window_size[0],
-            window_size[1] / 3.,
-            20.,
-            &self.items[0].description.clone(),
-        );
-        self.items[0].draw_text_given_space(
-            screen_width() - window_size[0],
-            2.*window_size[1] / 3.,
-            400.,
-            400.,
-            20.,
-            &self.items[1].description.clone(),
-        );
-        self.items[0].draw_text_given_space(
-            screen_width() - window_size[0],
-            3. * window_size[1] / 3.,
-            window_size[0],
-            window_size[1] / 3.,
-            20.,
-            &self.items[2].description.clone(),
-        );
-        if is_mouse_button_down(MouseButton::Left) {
-            let pos = mouse_position();
-            if pos.0 > vec_space[0] {
-                if pos.1 > 3.*window_size[1]/3. {
-                    item = Some(self.items[2].clone());
-                }
-                if pos.1 > 2.*window_size[1]/3. {
-                    item = Some(self.items[1].clone());
-                } else {
-                    item = Some(self.items[0].clone());
-                }
-            }
-        }
+        // draw_rectangle(
+        //     screen_width() - window_size[0],
+        //     0.,
+        //     window_size[0],
+        //     screen_height(),
+        //     BLACK,
+        // );
+        // self.items[0].draw_text_given_space(
+        //     screen_width() - window_size[0],
+        //     window_size[1]/3.,
+        //     window_size[0],
+        //     window_size[1] / 3.,
+        //     20.,
+        //     &self.items[0].description.clone(),
+        // );
+        // self.items[0].draw_text_given_space(
+        //     screen_width() - window_size[0],
+        //     2.*window_size[1] / 3.,
+        //     400.,
+        //     400.,
+        //     20.,
+        //     &self.items[1].description.clone(),
+        // );
+        // self.items[0].draw_text_given_space(
+        //     screen_width() - window_size[0],
+        //     3. * window_size[1] / 3.,
+        //     window_size[0],
+        //     window_size[1] / 3.,
+        //     20.,
+        //     &self.items[2].description.clone(),
+        // );
+        // if is_mouse_button_down(MouseButton::Left) {
+        //     let pos = mouse_position();
+        //     if pos.0 > vec_space[0] {
+        //         if pos.1 > 3.*window_size[1]/3. {
+        //             item = Some(self.items[2].clone());
+        //         }
+        //         if pos.1 > 2.*window_size[1]/3. {
+        //             item = Some(self.items[1].clone());
+        //         } else {
+        //             item = Some(self.items[0].clone());
+        //         }
+        //     }
+        // }
         item
     }
 }

@@ -4,7 +4,7 @@ use ::rand::Rng;
 use macroquad::prelude::*;
 use std::format;
 use std::time::SystemTime;
-
+use macroquad::ui::{hash, root_ui, widgets, Skin, Style};
 #[derive(Default)]
 pub struct Question {
     pub answer: String,
@@ -127,15 +127,39 @@ pub fn ask_question(question: &Question, old_input: &String) -> String {
     let mut answer = (*old_input.clone()).to_string();
     let user_answer = answer.chars();
     let q: Vec<&str> = question.question.split("\n").collect();
-    for line in 0..q.len() {
-        draw_text(q[line], 100., 100.+50.*line as f32, 45., BLUE);
-    }
-    
-    let s_answer = &question.user_answer[0..**[&question.user_answer.len(),&question.answer.split(',').collect::<Vec<&str>>()[0].len()].iter().min().unwrap()];
-    draw_text(s_answer, 100., screen_height()-150., 45., BLUE);
-    if s_answer.len() >= question.user_answer.len() {
+    let mut each_line: Vec<String> = Vec::new();
+    let each_word: Vec<String> = question.question.split("\n").map(str::to_string).collect(); 
+    println!("{}",question.question );
+    root_ui().window(
+        hash!("Question"),
+        vec2((screen_width())/2. -200., screen_height()-150.),
+        vec2(400., 150.),
+        |ui| {
+            let mut line_tally= 1;
+            for line in &each_word {
+                        widgets::Label::new(line.clone()).position(vec2(0., (line_tally) as f32 * 25.))
+                        .ui(ui);
+                        line_tally += 1;
+                        ui.separator();
+                        ui.move_window(hash!("Question"),vec2((screen_width())/2.-200., screen_height()-150.));
+                    }
+                }
+    );
+    // root_ui().window(
+    //     hash!("Answer"),
+    //     vec2((screen_width()-200.)/2., screen_height()-175.),
+    //     vec2(200., 50.),
+    //     |ui| {
+    //         widgets::Label::new(question.user_answer.clone()).position(vec2(0., 0.,))
+    //         .ui(ui);
+    //         ui.separator();
+    //         ui.move_window(hash!("Question"),vec2((screen_width()-200.)/2., screen_height()-175.));
+    //             }
+    // );
+    // draw_text(&question.user_answer,(screen_width()-400.)/2., screen_height()-275.,30.,WHITE);
+    println!("{}", question.user_answer);
     let entered_char = get_char_pressed();
-    if entered_char.is_some() && "1234567890.,-+".contains(entered_char.unwrap()){
+    if entered_char.is_some() && "1234567890.,-+".contains(entered_char.unwrap()) {
         answer = format!(
             "{}{}",
             String::from_iter(user_answer),
@@ -144,7 +168,6 @@ pub fn ask_question(question: &Question, old_input: &String) -> String {
     } else {
         answer = String::from_iter(user_answer);
     }
-}
 
     if  is_key_pressed(KeyCode::Enter) {
         println!("{} = {} is {}", question.user_answer, question.answer, question.check_answer());

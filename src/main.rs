@@ -18,14 +18,15 @@ extern crate rand;
 use ::rand::Rng;
 pub mod question_gen;
 use crate::question_gen::{ask_question, Question};
-// use std::thread;
+use macroquad::ui::{hash, root_ui, widgets, Skin, Style};
 use std::time::SystemTime;
 pub mod traits;
 use crate::traits::RemoveLast;
 pub mod tunelling;
 use crate ::tunelling::*;
+use std::fs;
 
-const MAX_LEVEL: usize = 3;
+const MAX_LEVEL: usize = 1;
 // use pathfinding::prelude::dijkstra;
 
 fn draw_mobs(mobs: &Vec<Entity>, textures: [[Texture2D; 4]; 4], bar_texture: Texture2D) {
@@ -39,7 +40,43 @@ fn draw_mobs(mobs: &Vec<Entity>, textures: [[Texture2D; 4]; 4], bar_texture: Tex
         mob.draw_entity(textures[mob_index][mob.frame], bar_texture);
     }
 }
-
+fn set_ui() {
+    let skin = {
+        let window_style = root_ui()
+        .style_builder()
+        // .background_margin(RectOffset::new(37.0, 37.0, 5.0, 5.0))
+        .color(Color::from_rgba(43, 44, 51,255))
+        .color_inactive(Color::from_rgba(43, 44, 51,255))
+        // .margin(RectOffset::new(10.0, 10.0, 0.0, 0.0))
+        .build();
+        let label_style = root_ui()
+        .style_builder().text_color(Color::from_rgba(176, 179, 194,255))
+        // .background_margin(RectOffset::new(37.0, 37.0, 5.0, 5.0))
+        .color(Color::from_rgba(43, 44, 51,255))
+        .font_size(25)
+        // .margin(RectOffset::new(10.0, 10.0, 0.0, 0.0))
+        .build();
+        let button_style = root_ui()
+        .style_builder()
+        .font_size(25)
+        // .background_margin(RectOffset::new(37.0, 37.0, 5.0, 5.0))
+        .color_clicked(Color::from_rgba(43, 44, 51,255))
+        .text_color_clicked(Color::from_rgba(176, 179, 194,255))
+        .text_color(Color::from_rgba(43, 44, 51,255))
+        .color(Color::from_rgba(176, 179, 194,255))
+        // .text_color_clicked(Color::from_rgba(43, 44, 51,255))
+        // .color_selected(Color::from_rgba(176, 179, 194,255))
+        // .margin(RectOffset::new(10.0, 10.0, 0.0, 0.0))
+        .build();
+        Skin {
+            button_style,
+            window_style,
+            label_style,
+            ..root_ui().default_skin()
+        }
+    };
+    root_ui().push_skin(&skin);
+}
 fn set_spawn(map: &Vec<Vec<AdvanceTileTypes>>) -> (i16, i16) {
     let mut rng = rand::thread_rng();
     let mut x: usize = rng.gen_range(0..WORLD_SIZE.0);
@@ -116,6 +153,8 @@ async fn main() {
     let mut black_list: Vec<(i16, i16)> = Vec::new();
     let mut all_storage: HashMap<(i16, i16), Storage> = HashMap::new();
     let mut mobs = create_mobs(12, &map2.tile_placement,level_count);
+    // let mut hight_scores: String = fs::read("../lib/Score.txt").expect("Unable to read file").into_iter().map(|x| x.to_string()).collect();
+    // let high_score_data: Vec<&str> = hight_scores.split("|").collect();
     let hud = Texture2D::from_image(&Image::from_file_with_format(
         include_bytes!("../lib/hud-pieces.png"),
         Some(ImageFormat::Png),
@@ -258,7 +297,9 @@ async fn main() {
     let mut moving = false;
     let exit = set_spawn(&map2.tile_placement);
     map2.exit = (exit.0 as i32,exit.1 as i32);
+    set_ui();
     loop {
+        // println!("{}", cfg.create_sentence("S".to_string()));
         if !matches!(current_state, States::Menu) {
             set_camera(&Camera2D {
                 target: vec2(target.0, target.1),
@@ -506,7 +547,9 @@ async fn main() {
                 if matches!(_sub_state_one,States::Question) {
                     question.user_answer = ask_question(&question, &question.user_answer);
                     if is_key_pressed(KeyCode::Backspace) {
-                        question.user_answer = question.user_answer.remove_last();
+                        if question.user_answer.len() != 0 {
+                        question.user_answer = question.user_answer[0..question.user_answer.len()-1].to_string();
+                        }
                     }
             }
                 if selected != (x, y) {
@@ -522,7 +565,12 @@ async fn main() {
                     );
                 }
             } else {
-                 current_state = States::Victory;
+                 if level_count == MAX_LEVEL {
+
+                    current_state = States::Victory;
+                 }
+                //  fs::write("../lib/Score", format!("{}|",MAX_LEVEL*(kill_count*5+question_count*10))).expect("Unable to write file");
+
             }
         } 
         if matches!(current_state,States::LevelScreen) {
@@ -546,6 +594,23 @@ async fn main() {
 
             draw_text("- Victory -",screen_width()/2.-200.,screen_height()/2.,100.,WHITE);
             draw_text(&format!("- Score {} -", MAX_LEVEL*(kill_count*5+question_count*10)),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
+            // if high_score_data.len() != 0 {
+            //     draw_text(&format!("- 1st Score {} -", high_score_data[0]),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
+            // } else {
+            //     draw_text(&format!("- 1st Score - -"),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
+            // }
+            
+            // if high_score_data.len() > 1 {
+            //     draw_text(&format!("- 2nd Score {} -", high_score_data[1]),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
+            // } else {
+            //     draw_text(&format!("- 2nd Score - -"),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
+            // }
+            // if high_score_data.len() > 2 {
+            //     draw_text(&format!("- 3nd Score {} -", high_score_data[2]),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
+            // } else {
+            //     draw_text(&format!("- 3nd Score - -"),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
+            // }
+            
 
         }
         next_frame().await

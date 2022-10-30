@@ -178,7 +178,6 @@ impl Points {
 }
 pub struct Inventory {
     pub storage: Vec<Item>,
-    skin: Style,
     state: bool,
     display_index: Option<usize>,
 }
@@ -186,11 +185,7 @@ impl Default for Inventory {
     fn default() -> Self {
         Self {
             storage: Vec::new(),
-            skin: root_ui()
-                .style_builder()
-                .background_margin(RectOffset::new(37.0, 37.0, 5.0, 5.0))
-                .margin(RectOffset::new(10.0, 10.0, 0.0, 0.0))
-                .build(),
+            
             state: false,
             display_index: None,
         }
@@ -198,19 +193,10 @@ impl Default for Inventory {
 }
 impl Inventory {
     pub fn display_inventory(&mut self) -> Option<[i16;5]>{
-        let button_skin = {
-            let button_style = self.skin.clone();
-            Skin {
-                button_style,
-                ..root_ui().default_skin()
-            }
-            
-        };
-        root_ui().push_skin(&button_skin);
         root_ui().window(
-            hash!(),
+            hash!("Inventory"),
             vec2(0., screen_height() / 15.),
-            vec2(screen_width() / 6., screen_height() * 13.0 / 15.),
+            vec2(250., screen_height() * 13.0 / 15.),
             |ui| {
                 for each_item_index in 0..self.storage.len() {
                     if widgets::Button::new(
@@ -262,8 +248,8 @@ impl Inventory {
             self.storage.sort_by(|a,b| b.equip.cmp(&a.equip));
         root_ui().window(
             hash!("InfoMenu"),
-            vec2(screen_width() / 6., screen_height() / 15. + self.display_index.unwrap() as f32 * 25.),
-            vec2(screen_width() / 3., screen_height() * 3.0 / 15.),
+            vec2(250., screen_height() / 15. + self.display_index.unwrap() as f32 * 25.),
+            vec2(screen_width() / 4., screen_height() * 3.0 / 15.),
             |ui| {
                     let description = self.storage[self.display_index.unwrap()].description.clone();
                     let mut vector: Vec<String> = Vec::new();
@@ -280,7 +266,7 @@ impl Inventory {
                         }
                     }
                     for line in 0..vector.len() {
-                        widgets::Button::new(vector[line].clone()).position(vec2(0.,line as f32 *25.))
+                        widgets::Label::new(vector[line].clone()).position(vec2(0.,line as f32 *25.))
                     .ui(ui);
                     }
                     
