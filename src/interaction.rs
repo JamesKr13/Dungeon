@@ -69,8 +69,8 @@ impl fmt::Display for Items {
             Items::Amulet => write!(f,"Amulet"),
             Items::Health => write!(f, "Potion of Healing"),
             Items::Stamina => write!(f,"Potion of Stamina"),
-            Items::BigStamina => write!(f,"Potion of Larger Stamina"),
-            Items::BigHealth => write!(f,"Potion of Larger Healing"),
+            Items::BigStamina => write!(f,"Big Stamina Potion"),
+            Items::BigHealth => write!(f,"Big Healing Potion"),
             Items::Mystery => write!(f,"Potion of mystery, who knows what will happen but one thing's for sure,")
         }
     }
@@ -344,8 +344,10 @@ impl DrawText for Item {
 }
 
 impl Item {
-    fn new(description: String, name: String) -> Self {
+    fn new(description: String, name: String,level:i16) -> Self {
         let mut rng = rand::thread_rng();
+        let min = -((5*level/3) as i16);
+        let max = (5*level/2) as i16;
         let random_item: usize = rng.gen_range(0..=10);
         let item_type = match random_item {
             0 => Items::Sword,
@@ -370,7 +372,7 @@ impl Item {
                 "Type",
                 &name,
             );
-            effect = [rng.gen_range(-5..=5),rng.gen_range(-5..=5),rng.gen_range(-5..=5),0,0]
+            effect = [rng.gen_range(min..=max),rng.gen_range(min..=max),rng.gen_range(min..=max),0,0]
         } else {
             if matches!(item_type,Items::Mystery) {
                 effect = [rng.gen_range(-3..=3),rng.gen_range(-2..=2),rng.gen_range(-3..3),rng.gen_range(-3..=3),rng.gen_range(-3..=3)];
@@ -407,13 +409,13 @@ pub struct Storage {
     // inventory_skins: InventorySkins,
     pub used: bool,
 }
-impl Default for Storage {
-    fn default() -> Self {
+impl Storage {
+    pub fn new(level:i16) -> Self {
         let sentence = CFG::default();
         let all_items = vec![
-            Item::new(sentence.create_sentence("S".to_string()),sentence.create_sentence("MV".to_string())),
-            Item::new(sentence.create_sentence("S".to_string()),sentence.create_sentence("MV".to_string())),
-            Item::new(sentence.create_sentence("S".to_string()),sentence.create_sentence("MV".to_string())),
+            Item::new(sentence.create_sentence("S".to_string()),sentence.create_sentence("MV".to_string()),level),
+            Item::new(sentence.create_sentence("S".to_string()),sentence.create_sentence("MV".to_string()),level),
+            Item::new(sentence.create_sentence("S".to_string()),sentence.create_sentence("MV".to_string()),level),
         ];
         // ivsk.create_inventory_skins(&all_items);
         Self {
@@ -424,16 +426,14 @@ impl Default for Storage {
             used: false,
         }
     }
-}
-impl Storage {
     pub fn display(&mut self) -> Option<Item> {
         let mut item: Option<Item> = None;
         
         let window_size = vec2(screen_width() / 3., 3. * screen_height() / 4.);
         root_ui().window(
             hash!("Storage"),
-            vec2(screen_width()-300., screen_height() / 15.),
-            vec2(300., screen_height() * 13.0 / 15.),
+            vec2(screen_width()-350., screen_height() / 15.),
+            vec2(350., screen_height() * 13.0 / 15.),
             |ui| {
                 let mut line_tally= 0;
                 for each_item_index in 0..self.items.len() {

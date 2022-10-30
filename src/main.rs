@@ -25,8 +25,9 @@ use crate::traits::RemoveLast;
 pub mod tunelling;
 use crate ::tunelling::*;
 use std::fs;
+use lazy_static::lazy_static;
 
-const MAX_LEVEL: usize = 1;
+const MAX_LEVEL: usize = 10;
 // use pathfinding::prelude::dijkstra;
 
 fn draw_mobs(mobs: &Vec<Entity>, textures: [[Texture2D; 4]; 4], bar_texture: Texture2D) {
@@ -321,7 +322,7 @@ async fn main() {
             }
 
             //Main loop
-            if matches!(current_state, States::Play) && level_count != MAX_LEVEL{
+            if matches!(current_state, States::Play) && &level_count != &MAX_LEVEL{
                 map2.draw_map(texture,torch_texture);
                 draw_mobs(&mobs, mob_textures, hud);
                 if is_key_pressed(KeyCode::I) {
@@ -442,7 +443,7 @@ async fn main() {
                             if store_check != 2 {
                                 all_storage
                                     .entry(current_player)
-                                    .or_insert_with(|| Storage::default());
+                                    .or_insert_with(|| Storage::new(level_count as i16));
                             sub_states[0] = match sub_states[0] {
                                 States::Storage => States::Play,
                                 _ => States::Storage,
