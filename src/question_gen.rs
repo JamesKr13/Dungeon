@@ -135,9 +135,11 @@ pub fn ask_question(question: &Question, old_input: &String) -> String {
         vec2((screen_width())/2. -200., screen_height()-150.),
         vec2(400., 150.),
         |ui| {
+            widgets::Label::new(&question.user_answer).position(vec2(0., (1) as f32 * 25.))
+                        .ui(ui);
             let mut line_tally= 1;
             for line in &each_word {
-                        widgets::Label::new(line.clone()).position(vec2(0., (line_tally) as f32 * 25.))
+                        widgets::Label::new(line.clone()).position(vec2(0., (line_tally+2) as f32 * 25.))
                         .ui(ui);
                         line_tally += 1;
                         ui.separator();

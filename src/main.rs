@@ -353,7 +353,7 @@ async fn main() {
                                 .consider_action(&map2.tile_placement, player.cor, &exculde_self)
                                 .is_some()
                             {
-                                let life_state = player.health.adjust(0);
+                                let life_state = player.health.adjust(-1);
                                 
                                 if life_state.is_some() {
                                     current_state = States::Menu;

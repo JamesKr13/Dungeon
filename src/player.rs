@@ -554,7 +554,7 @@ impl Entity {
                         .min_by(|x, y| x.partial_cmp(y).unwrap())
                         .unwrap();
                     //if the smallest value is within close combat range the function will return a damage value
-                    if min <= &0. {
+                    if min <= &1. {
                         return Some(self.damage.deal(Some(1)));
                     } else {
                         // Gets the new coordinates from the smallest cost value
