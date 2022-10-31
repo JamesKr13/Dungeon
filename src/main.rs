@@ -11,24 +11,20 @@ pub mod bsp_tree_map_generation;
 use crate::bsp_tree_map_generation::{abs, WORLD_SIZE};
 use std::collections::HashMap;
 pub mod interaction;
-use crate::interaction::{Storage, CFG};
+use crate::interaction::{Storage};
 pub mod player;
 use crate::player::{Coordinates, Entity, EntityType, PlayerCharacter};
 extern crate rand;
 use ::rand::Rng;
 pub mod question_gen;
 use crate::question_gen::{ask_question, Question};
-use macroquad::ui::{hash, root_ui, widgets, Skin, Style};
+use macroquad::ui::{root_ui, widgets, hash, Skin};
 use std::time::SystemTime;
 pub mod traits;
+#[allow(unused_imports)]
 use crate::traits::RemoveLast;
-pub mod tunelling;
-use crate ::tunelling::*;
-use std::fs;
-use lazy_static::lazy_static;
-
+//Note: Roughly 2751 lines of code
 const MAX_LEVEL: usize = 10;
-// use pathfinding::prelude::dijkstra;
 
 fn draw_mobs(mobs: &Vec<Entity>, textures: [[Texture2D; 4]; 4], bar_texture: Texture2D) {
     for mob in mobs {
@@ -112,6 +108,62 @@ pub fn create_mobs(number: i8, map: &Vec<Vec<AdvanceTileTypes>>, level: usize) -
     }
     all_entity
 }
+fn transit_control() -> Option<States> {
+    let mut return_state = None;
+    root_ui().window(
+        hash!("Control"),
+        vec2((screen_width()-200.)/2., screen_height()-200.),
+        vec2(200., 100.),
+        |ui| {
+            if widgets::Button::new("Return to Menu").position(vec2(0., 0.))
+            .ui(ui) {
+                return_state = Some(States::Menu)
+            }
+            if widgets::Button::new("Play Again").position(vec2(0., 30.))
+            .ui(ui) {
+                return_state = Some(States::PlayAgain)
+            }
+            // if widgets::Button::new("Menu").position(vec2(screen_width()/2. -150., screen_height()-100.))
+            // .ui(ui) {
+            //     return Some(States::PlayAgain)
+            // }
+            ui.move_window(hash!("Control"),vec2((screen_width()-200.)/2., screen_height()-200.));
+        });
+        return return_state    
+}
+fn menu(current_state:&States) -> Option<States> {
+    let mut return_state = None;
+    if !matches!(current_state,States::LevelPicker) {
+    root_ui().window(
+        hash!("Menu"),
+        vec2((screen_width()-200.)/2., screen_height()-200.),
+        vec2(200., 100.),
+        |ui| {
+            if widgets::Button::new("New Game").position(vec2(0., 0.))
+            .ui(ui) {
+                return_state = Some(States::LevelPicker);
+            }
+            ui.move_window(hash!("Menu"),vec2((screen_width()-200.)/2., screen_height()-200.));
+        });
+    } else {
+        root_ui().window(
+            hash!("Menu"),
+            vec2((screen_width()-200.)/2., screen_height()-200.),
+            vec2(200., 100.),
+            |ui| {
+                if widgets::Button::new("Normal").position(vec2(0., 0.))
+                    .ui(ui) {
+                        return_state = Some(States::Normal);
+                    }
+                    if widgets::Button::new("Hard").position(vec2(0., 30.))
+                    .ui(ui) {
+                        return_state = Some(States::Hard);
+                    }
+                ui.move_window(hash!("Menu"),vec2((screen_width()-200.)/2., screen_height()-200.));
+            });
+    }
+        return return_state    
+}
 #[macroquad::main("differ-geon-11")]
 async fn main() {
     let target = (0., 0.);
@@ -130,7 +182,7 @@ async fn main() {
         f32::from(current_player.1) * zoom,
     );
    
-    let mut current_state = States::Play;
+    let mut current_state = States::Menu;
     let mut sub_states = [States::Play; 3];
     
     let mut x = 0;
@@ -164,7 +216,6 @@ async fn main() {
     // let menu = Texture2D::from_image(&Image::from_file_with_format(include_bytes!("../lib/cave.png"),Some(ImageFormat::Png)));
     // menu.set_filter(FilterMode::Nearest);
     
-    let mut user_answer = String::new();
     let mob_textures: [[Texture2D; 4]; 4] = [
         [
             Texture2D::from_image(&Image::from_file_with_format(
@@ -292,8 +343,8 @@ async fn main() {
     let mut period = SystemTime::now();
     let mut movement_period = SystemTime::now();
     let mut question = Question::default();
-    question.create("eigen value");
-    let cfg = CFG::default();
+    let mut diffuculty = 1;
+    question.create(diffuculty);
     let mut mob_shift_count = 0;
     let mut moving = false;
     let exit = set_spawn(&map2.tile_placement);
@@ -356,7 +407,7 @@ async fn main() {
                                 let life_state = player.health.adjust(-1);
                                 
                                 if life_state.is_some() {
-                                    current_state = States::Menu;
+                                    current_state = States::Dead;
                                 }
                             }
                         }
@@ -430,7 +481,6 @@ async fn main() {
                             all_storage= HashMap::new();
                             texture.set_filter(FilterMode::Nearest);
                             map2 = MapLayout::default();
-                            current_player = set_spawn(&map2.tile_placement);
                             map2.tile_decorate();
                             mobs = create_mobs(12, &map2.tile_placement, level_count);
                             current_player = set_spawn(&map2.tile_placement);
@@ -530,14 +580,14 @@ async fn main() {
                             mobs.remove(position_of_mob.unwrap());
                             kill_count += 1;
                         }
-                        question.create("eigen value");
+                        question.create(diffuculty);
                         sub_states[1] = States::Play;
                         position_of_mob = None;
                         question.user_answer = String::new();
                         question_count += 1;
                     }
                     if question.user_answer.eq("false") {
-                        question.create("eigen value");
+                        question.create(diffuculty);
                         sub_states[1] = States::Play;
                         position_of_mob = None;
                         question.user_answer = String::new();
@@ -574,11 +624,42 @@ async fn main() {
 
             }
         } 
+        if matches!(current_state,States::PlayAgain) {
+            level_count = 0;
+            map2 = MapLayout::default();
+            map2.tile_decorate();
+            kill_count = 0;
+            let exit = set_spawn(&map2.tile_placement);
+            map2.exit = (exit.0 as i32,exit.1 as i32);
+            position_of_mob = None;
+            black_list= Vec::new();
+            all_storage= HashMap::new();
+            texture.set_filter(FilterMode::Nearest);
+            map2 = MapLayout::default();
+            map2.tile_decorate();
+            mobs = create_mobs(12, &map2.tile_placement, level_count);
+            current_player = set_spawn(&map2.tile_placement);
+            let exit = set_spawn(&map2.tile_placement);
+            map2.exit = (exit.0 as i32,exit.1 as i32);
+            current_state = States::LevelScreen;
+            period = SystemTime::now();
+            player = PlayerCharacter::intialise(
+                20,
+                5,
+                5,
+                30.,
+                Coordinates {
+                    x: current_player.0,
+                    y: current_player.1,
+                },
+                15,
+            );
+        }
         if matches!(current_state,States::LevelScreen) {
             set_default_camera();
-
-            draw_text(&format!("Floor {}/{}",level_count,MAX_LEVEL),screen_width()/2.-200.,screen_height()/2.,100.,WHITE);
-            if period.elapsed().unwrap().as_secs() > 1 {
+            let level = &format!("Floor {}/{}",level_count,MAX_LEVEL);
+            draw_text(&level,(screen_width()-measure_text(&level,None,100,1.).width)/2.,screen_height()/2.,100.,WHITE);
+            if period.elapsed().unwrap().as_secs() > 1 && level_count != 0{
                 draw_text("- Complete -",screen_width()/2.-150.,screen_height()/2.+100.,50.,WHITE);
             }
             if period.elapsed().unwrap().as_secs() > 3 {
@@ -587,14 +668,36 @@ async fn main() {
         }
         if matches!(current_state,States::Pause) {
             set_default_camera();
-
-            draw_text("- Paused -",screen_width()/2.-200.,screen_height()/2.,100.,WHITE);
+            let transit_shift = transit_control();
+            if transit_shift.is_some() {
+                current_state = transit_shift.unwrap();
+            }
+            draw_text("- Paused -",(screen_width()-measure_text("- Paused -",None,100,1.).width)/2.,screen_height()/2.,100.,WHITE);
+        }
+        if matches!(current_state,States::Dead) {
+            set_default_camera();
+            let transit_shift = transit_control();
+            if transit_shift.is_some() {
+                current_state = transit_shift.unwrap();
+            }
+            draw_text("- You're Dead -",(screen_width()-measure_text("- You're Dead -",None,100,1.).width)/2.,screen_height()/2.,100.,WHITE);
+            let output_string = &format!("- Score {} -", (kill_count*5+question_count*10)+level_count*100);
+            draw_text(output_string,(screen_width()-measure_text(&output_string,None,50,1.).width)/2.,screen_height()/2.+100.,50.,WHITE);
+            let transit_shift = transit_control();
+            if transit_shift.is_some() {
+                current_state = transit_shift.unwrap();
+            }
         }
         if matches!(current_state,States::Victory) {
             set_default_camera();
 
-            draw_text("- Victory -",screen_width()/2.-200.,screen_height()/2.,100.,WHITE);
-            draw_text(&format!("- Score {} -", MAX_LEVEL*(kill_count*5+question_count*10)),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
+            draw_text("- Victory -",(screen_width()-measure_text("- Vectory -",None,100,1.).width)/2.,screen_height()/2.,100.,WHITE);
+            let output_string = &format!("- Score {} -", (kill_count*5+question_count*10)+level_count*100);
+            draw_text(output_string,(screen_width()-measure_text(&output_string,None,50,1.).width)/2.,screen_height()/2.+100.,50.,WHITE);
+            let transit_shift = transit_control();
+            if transit_shift.is_some() {
+                current_state = transit_shift.unwrap();
+            }
             // if high_score_data.len() != 0 {
             //     draw_text(&format!("- 1st Score {} -", high_score_data[0]),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
             // } else {
@@ -611,9 +714,31 @@ async fn main() {
             // } else {
             //     draw_text(&format!("- 3nd Score - -"),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
             // }
-            
 
         }
+        if match current_state {
+            States::LevelPicker => true,
+            States::Menu => true,
+            _ => false,
+        }  {
+            set_default_camera();
+
+            draw_text("- Math Dungeon -",(screen_width()-measure_text("- Math Dungeon -",None,100,1.).width)/2.,screen_height()/2.,100.,WHITE);
+            let menu = menu(&current_state);
+            if menu.is_some() {
+                current_state = menu.unwrap();
+                let change_differculty = match current_state {
+                    States::Normal => 1,
+                    States::Hard => 3,
+                    _ => 0,
+                };
+                if change_differculty != 0 {
+                    diffuculty = change_differculty;
+                    println!("{}", diffuculty);
+                    current_state = States::PlayAgain;   
+                }
+            }
+        }   
         next_frame().await
     }
 }

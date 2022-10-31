@@ -1,7 +1,6 @@
 use super::map::AdvanceTileTypes;
 use macroquad::prelude::*;
 pub const SPEED: f32 = 16.;
-use enum_assoc::Assoc;
 // use std::collections::HashMap;
 
 #[derive(Copy, Clone, Debug)]
@@ -12,12 +11,15 @@ pub enum States {
     Storage,
     Empty,
     Play,
+    LevelPicker,
     OptionInfo,
     Question,
     Dead,
-    StartScreen,
     LevelScreen,
     Victory,
+    Hard,
+    Normal,
+    PlayAgain,
 }
 // pub struct ManageStates {
 //     pub main_state: States,

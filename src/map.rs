@@ -6,7 +6,6 @@ extern crate rand;
 use macroquad::prelude::*;
 use rand::Rng;
 use std::fmt;
-use enum_assoc::Assoc;
 
 const NUMBER_OF_DECORATIONS: i16 = 7;
 const FLOORCOOR: [(i16, i16); 12] = [

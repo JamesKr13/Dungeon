@@ -1,10 +1,10 @@
 extern crate rand;
-use super::traits::add_dp_place;
+use super::traits::AddDpPlace;
 use ::rand::Rng;
 use macroquad::prelude::*;
 use std::format;
 use std::time::SystemTime;
-use macroquad::ui::{hash, root_ui, widgets, Skin, Style};
+use macroquad::ui::{hash, root_ui, widgets};
 #[derive(Default)]
 pub struct Question {
     pub answer: String,
@@ -13,17 +13,17 @@ pub struct Question {
     pub user_answer: String,
 }
 impl Question {
-    pub fn create(&mut self, q_type: &str) {
+    pub fn create(&mut self,diffuculty: usize) {
         self.user_answer = String::new();
         let mut rng = rand::thread_rng();
-        let chance: usize = rng.gen_range(0..3);
+        let chance: usize = rng.gen_range(0..diffuculty);
         match chance {
             0 => {
-                self.eigen_values_simple();
+                self.timestables();
                 Some(())
             }
             1 => {
-                self.timestables();
+                self.eigen_values_simple();
                 Some(())
             },
             2 => {self.cofactor_expansion_generation();
@@ -40,6 +40,9 @@ impl Question {
         }
         let mut answer: Vec<&str> = self.answer.split(',').collect();
         answer.sort_by(|a, b| b.cmp(a));
+        if self.answer.len() == 2 && (self.user_answer == answer[0] || self.user_answer == answer[1]) {
+            return true
+        }
         let mut user_input: Vec<&str> = self.user_answer.split(',').collect();
         println!("{:#?} = {:#?}", answer, user_input);
         user_input.sort_by(|a, b| b.cmp(a));
@@ -51,9 +54,9 @@ impl Question {
                 }
             }
             if _new_user_answer.len() == 2{
-                return (answer.iter().any(|ans| ans.eq(&_new_user_answer[0]) || ans.eq(&_new_user_answer[1])))
+                return answer.iter().any(|ans| ans.eq(&_new_user_answer[0]) || ans.eq(&_new_user_answer[1]))
             } else {
-                return (answer.iter().any(|ans| ans.eq(&_new_user_answer[0])))
+                return answer.iter().any(|ans| ans.eq(&_new_user_answer[0]))
             }
             
     } else {
@@ -126,8 +129,6 @@ impl Question {
 pub fn ask_question(question: &Question, old_input: &String) -> String {
     let mut answer = (*old_input.clone()).to_string();
     let user_answer = answer.chars();
-    let q: Vec<&str> = question.question.split("\n").collect();
-    let mut each_line: Vec<String> = Vec::new();
     let each_word: Vec<String> = question.question.split("\n").map(str::to_string).collect(); 
     println!("{}",question.question );
     root_ui().window(

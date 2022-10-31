@@ -1,12 +1,11 @@
 use super::control::States;
-use super::player::Coordinates;
 use macroquad::prelude::*;
 use std::collections::HashMap;
 use std::fmt;
 extern crate rand;
 use ::rand::Rng;
 use enum_assoc::Assoc;
-use macroquad::ui::{hash, root_ui, widgets, Skin, Style};
+use macroquad::ui::{hash, root_ui, widgets};
 // pub struct Action {
 //     pub key: KeyCode,
 //     pub state: States
@@ -26,8 +25,8 @@ use macroquad::ui::{hash, root_ui, widgets, Skin, Style};
 //         }
 //     }
 // }
-const COL_ROW_SIZE: usize = 5;
-const INVENTORY_SPACE: usize = 25;
+// const COL_ROW_SIZE: usize = 5;
+// const INVENTORY_SPACE: usize = 25;
 
 #[derive(Clone, Copy,Assoc)]
 #[func(pub const fn consumable(&self) -> bool)]
@@ -366,9 +365,9 @@ impl Item {
         let name = format!("{} {}",name,&item_type
         .to_string()[..]);
         let effect: [i16;5];
-        let mut d: String = String::new();
+        let mut _d: String = String::new();
         if random_item <= 5 {
-            d = description.replace(
+            _d = description.replace(
                 "Type",
                 &name,
             );
@@ -379,7 +378,7 @@ impl Item {
             } else {
                 effect = [0,0,0,0,0]
             }
-            d = format!("Magical {} that's gonna take you on fantastical journey.",name);
+            _d = format!("Magical {} that's gonna take you on fantastical journey.",name);
         }
         Self {
             slot: match &item_type {
@@ -392,7 +391,7 @@ impl Item {
                 Items::Amulet => Slots::Neck,
                 _ => Slots::None
             },
-            description: d,
+            description: _d,
             item_type: item_type,
             equip: false,
             name: name,
@@ -429,7 +428,6 @@ impl Storage {
     pub fn display(&mut self) -> Option<Item> {
         let mut item: Option<Item> = None;
         
-        let window_size = vec2(screen_width() / 3., 3. * screen_height() / 4.);
         root_ui().window(
             hash!("Storage"),
             vec2(screen_width()-350., screen_height() / 15.),
@@ -468,50 +466,6 @@ impl Storage {
             },
             
         );
-        // draw_rectangle(
-        //     screen_width() - window_size[0],
-        //     0.,
-        //     window_size[0],
-        //     screen_height(),
-        //     BLACK,
-        // );
-        // self.items[0].draw_text_given_space(
-        //     screen_width() - window_size[0],
-        //     window_size[1]/3.,
-        //     window_size[0],
-        //     window_size[1] / 3.,
-        //     20.,
-        //     &self.items[0].description.clone(),
-        // );
-        // self.items[0].draw_text_given_space(
-        //     screen_width() - window_size[0],
-        //     2.*window_size[1] / 3.,
-        //     400.,
-        //     400.,
-        //     20.,
-        //     &self.items[1].description.clone(),
-        // );
-        // self.items[0].draw_text_given_space(
-        //     screen_width() - window_size[0],
-        //     3. * window_size[1] / 3.,
-        //     window_size[0],
-        //     window_size[1] / 3.,
-        //     20.,
-        //     &self.items[2].description.clone(),
-        // );
-        // if is_mouse_button_down(MouseButton::Left) {
-        //     let pos = mouse_position();
-        //     if pos.0 > vec_space[0] {
-        //         if pos.1 > 3.*window_size[1]/3. {
-        //             item = Some(self.items[2].clone());
-        //         }
-        //         if pos.1 > 2.*window_size[1]/3. {
-        //             item = Some(self.items[1].clone());
-        //         } else {
-        //             item = Some(self.items[0].clone());
-        //         }
-        //     }
-        // }
         item
     }
 }

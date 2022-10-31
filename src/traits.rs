@@ -18,10 +18,10 @@ impl StringtToStr for String {
         &self[..]
     }
 }
-pub trait add_dp_place {
+pub trait AddDpPlace {
     fn add_dp(&self) -> Self;
 }
-impl add_dp_place for String {
+impl AddDpPlace for String {
     fn add_dp(&self) -> Self {
         Self::from_utf8([self.clone().into_bytes(), vec![46, 48, 48]].concat())
             .expect("Unable to convert from utf8 to string")

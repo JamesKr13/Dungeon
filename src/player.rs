@@ -1,14 +1,14 @@
 // use std::collections::HashMap;
-use super::interaction::{Item,DrawText,Items};
+use super::interaction::{Item,Items};
 extern crate rand;
 use super::map::AdvanceTileTypes;
 use super::map::CELL_SIZE;
 use macroquad::prelude::*;
-use macroquad::ui::{hash, root_ui, widgets, Skin, Style};
+use macroquad::ui::{hash, root_ui, widgets};
 use rand::Rng;
 use std::fmt;
 
-const CC_RANGE: f32 = 1.;
+// const CC_RANGE: f32 = 1.;
 #[derive(Default, Clone, Copy)]
 pub struct Coordinates<T> {
     pub x: T,
@@ -19,11 +19,6 @@ impl Coordinates<i16> {
     pub fn distance(&self, other: &Coordinates<i16>) -> f32 {
         f32::from((self.x - other.x).pow(2) + (self.y - other.y).pow(2)).sqrt()
     }
-}
-#[derive(Clone)]
-pub struct Health {
-    pub points: i16,
-    base_health: i16,
 }
 #[derive(Clone)]
 pub struct Points {
@@ -415,19 +410,13 @@ pub enum EntityType {
     Skelly2,
     Skull,
 }
-#[derive(Clone)]
-enum EntityStatus {
-    Passive,
-    Violent,
-    Neutral,
-}
+
 #[derive(Clone)]
 pub struct Entity {
     pub health: Points,
     damage: Damage,
     pub cor: Coordinates<i16>,
     pub entity_type: EntityType,
-    entity_status: EntityStatus,
     pub frame: usize,
     heal_percent: f32,
 }
@@ -449,19 +438,16 @@ impl Entity {
             3 => EntityType::Skull,
             _ => EntityType::Skelly2,
         };
-        let e_status = EntityStatus::Violent;
         Self {
             health: Points::new(base_health),
             damage: Damage::new(base_cc, base_range, base_accuracy),
             cor: spawn,
             entity_type: e_type,
-            entity_status: e_status,
             frame: 0,
             heal_percent: 5.,
         }
     }
     fn _attack(&self, target_pos: Coordinates<i16>) -> Option<i16> {
-        if !matches!(self.entity_status, EntityStatus::Passive) {
             return Some(
                 match f32::from(
                     (self.cor.x - target_pos.x).pow(2) + (self.cor.y - target_pos.y).pow(2),
@@ -473,8 +459,6 @@ impl Entity {
                     false => self.damage.ranged_damage.unwrap(),
                 },
             );
-        }
-        None
     }
     pub fn _update_entity_frame(&mut self) {
         // Match and shift entity frame for which texture is need to be load, for animations
@@ -554,7 +538,7 @@ impl Entity {
                         .min_by(|x, y| x.partial_cmp(y).unwrap())
                         .unwrap();
                     //if the smallest value is within close combat range the function will return a damage value
-                    if min <= &1. {
+                    if min <= &0. {
                         return Some(self.damage.deal(Some(1)));
                     } else {
                         // Gets the new coordinates from the smallest cost value
