@@ -698,22 +698,6 @@ async fn main() {
             if transit_shift.is_some() {
                 current_state = transit_shift.unwrap();
             }
-            // if high_score_data.len() != 0 {
-            //     draw_text(&format!("- 1st Score {} -", high_score_data[0]),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
-            // } else {
-            //     draw_text(&format!("- 1st Score - -"),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
-            // }
-            
-            // if high_score_data.len() > 1 {
-            //     draw_text(&format!("- 2nd Score {} -", high_score_data[1]),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
-            // } else {
-            //     draw_text(&format!("- 2nd Score - -"),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
-            // }
-            // if high_score_data.len() > 2 {
-            //     draw_text(&format!("- 3nd Score {} -", high_score_data[2]),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
-            // } else {
-            //     draw_text(&format!("- 3nd Score - -"),screen_width()/2.-100.,screen_height()/2.+100.,50.,WHITE);
-            // }
 
         }
         if match current_state {
