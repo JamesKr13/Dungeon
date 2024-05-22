@@ -15,3 +15,7 @@ Item names are generate the same way but with a simplifyed structure for them. E
 
 The map generation is gross. It used a massive switch for bitmasking, to identify what tiles go where based of a number made from the surronding tiles.
 Uses binary space partitioning to create the map, then create a randomly sized room in side the part space, join it to the next room.
+
+
+## Art
+All art is protected under CC.0.
