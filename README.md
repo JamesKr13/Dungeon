@@ -8,7 +8,7 @@ Randomly generates questions to ask the user which are either polynomial questio
 
 ## Randomly generate Loot
 
-Use markovs chain to randomly create item names and descriptions. Most hardcode the syntaxing item decriptions structure.
+Use markovs chain to randomly create item names and descriptions. Most hardcode syntaxing item decriptions structure.
 Item names are generate the same way but with a simplifyed structure for them. Effect and randomly generate based of what sort of basic stat increase of health, damage. 
 
 ## Map Generation
